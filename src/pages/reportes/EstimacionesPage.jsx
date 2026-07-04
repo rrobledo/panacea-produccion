@@ -42,8 +42,8 @@ export const EstimacionesPage = () => {
       </div>
 
       <div className="card" style={{ marginBottom: 16 }}>
-        <div className="card-body grid-4">
-          <div className="form-group">
+        <div className="card-body form-row">
+          <div className="form-group field-w-md">
             <label className="form-label">Mes</label>
             <select className="form-select" value={mes} onChange={e => applyFilter(Number(e.target.value))}>
               {MESES_CON_TODOS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}

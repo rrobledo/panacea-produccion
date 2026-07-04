@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FacturaForm } from './FacturaForm';
 import { InsumosLinesEditor } from './InsumosLinesEditor';
+import { FormActions } from '../../components/ui';
 import { useStagedList } from '../../hooks/useStagedList';
 import { api } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
@@ -45,8 +46,9 @@ export const FacturaCreatePage = () => {
           <div className="page-title">Nueva Factura/Gasto</div>
         </div>
       </div>
-      <FacturaForm onSubmit={handleSubmit} onCancel={handleCancel} saving={saving} />
+      <FacturaForm onSubmit={handleSubmit} />
       <InsumosLinesEditor items={insumos.items} onAdd={insumos.add} onRemove={insumos.remove} />
+      <FormActions formId="factura-form" onCancel={handleCancel} saving={saving} />
     </div>
   );
 };

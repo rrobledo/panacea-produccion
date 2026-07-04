@@ -22,25 +22,25 @@ export const InsumoForm = ({ initialData, onSubmit, onCancel, saving }) => {
     <form onSubmit={handleSubmit(onSubmit)}>
       <div className="card">
         <div className="card-header"><h3 className="card-title">Información del Insumo</h3></div>
-        <div className="card-body grid-2">
+        <div className="card-body form-row">
           {initialData?.id != null && (
-            <Field label="Id">
+            <Field label="Id" size="xs">
               <input className="form-input" value={initialData.id} readOnly style={{ background: 'var(--gray-50)' }} />
             </Field>
           )}
-          <Field label="Nombre" required error={errors.nombre?.message} span={2}>
+          <Field label="Nombre" required error={errors.nombre?.message}>
             <input {...register('nombre')} className={`form-input ${errors.nombre ? 'error' : ''}`} placeholder="Nombre del insumo" />
           </Field>
-          <Field label="Cantidad" required error={errors.cantidad?.message}>
+          <Field label="Cantidad" required error={errors.cantidad?.message} size="sm">
             <input {...register('cantidad')} type="number" step="any" className={`form-input ${errors.cantidad ? 'error' : ''}`} />
           </Field>
-          <Field label="Unidad de Medida" required error={errors.unidad_medida?.message}>
+          <Field label="Unidad de Medida" required error={errors.unidad_medida?.message} size="md">
             <select {...register('unidad_medida')} className={`form-select ${errors.unidad_medida ? 'error' : ''}`}>
               <option value="">Seleccione unidad</option>
               {UNIDADES_MEDIDA.map(u => <option key={u.value} value={u.value}>{u.label}</option>)}
             </select>
           </Field>
-          <Field label="Precio" required error={errors.precio?.message}>
+          <Field label="Precio" required error={errors.precio?.message} size="sm">
             <input {...register('precio')} type="number" step="0.01" className={`form-input ${errors.precio ? 'error' : ''}`} placeholder="0.00" />
           </Field>
         </div>

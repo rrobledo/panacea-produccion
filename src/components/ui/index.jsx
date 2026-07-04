@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { X, AlertTriangle, CheckCircle } from 'lucide-react';
+import { X, AlertTriangle, CheckCircle, Save } from 'lucide-react';
 
 // ── Modal ─────────────────────────────────────────────────────────────────
 export const Modal = ({ open, onClose, title, children, footer, size = '', noPad = false }) => {
@@ -41,8 +41,11 @@ export const ConfirmDialog = ({ open, onConfirm, onCancel, title, message, varia
 );
 
 // ── Form Field wrapper ────────────────────────────────────────────────────
-export const Field = ({ label, required, error, hint, children, span }) => (
-  <div className="form-group" style={span ? { gridColumn: `span ${span}` } : {}}>
+export const Field = ({ label, required, error, hint, children, span, size }) => (
+  <div
+    className={`form-group ${size ? `field-w-${size}` : ''}`}
+    style={span ? { gridColumn: `span ${span}`, flexBasis: '100%' } : undefined}
+  >
     {label && (
       <label className="form-label">
         {label}{required && <span className="required">*</span>}
@@ -51,6 +54,22 @@ export const Field = ({ label, required, error, hint, children, span }) => (
     {children}
     {error && <span className="form-error">{error}</span>}
     {!error && hint && <span className="form-hint">{hint}</span>}
+  </div>
+);
+
+// ── Form Actions bar ──────────────────────────────────────────────────────
+// Renders outside the <form> (e.g. below master-detail sections) and submits
+// via the `form` attribute, which ties a button to a <form> by id regardless
+// of where it sits in the DOM.
+export const FormActions = ({ formId, onCancel, saving }) => (
+  <div className="flex justify-end gap-2" style={{ marginTop: 16 }}>
+    <button type="button" className="btn btn-secondary" onClick={onCancel} disabled={saving}>
+      <X size={16} /> Cancelar
+    </button>
+    <button type="submit" form={formId} className="btn btn-primary" disabled={saving}>
+      {saving ? <span className="spinner" style={{ width: 16, height: 16 }} /> : <Save size={16} />}
+      {saving ? 'Guardando…' : 'Guardar'}
+    </button>
   </div>
 );
 
@@ -144,6 +163,7 @@ export const Tabs = ({ tabs, active, onChange }) => (
     {tabs.map(t => (
       <button
         key={t.value}
+        type="button"
         className={`tab-btn ${active === t.value ? 'active' : ''}`}
         onClick={() => onChange(t.value)}
       >

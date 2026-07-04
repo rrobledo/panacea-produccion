@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { FacturaForm } from './FacturaForm';
 import { FacturaPagos } from './FacturaPagos';
 import { FacturaInsumosDetail } from './FacturaInsumosDetail';
-import { PageLoader, ErrorState } from '../../components/ui';
+import { PageLoader, ErrorState, FormActions } from '../../components/ui';
 import { useFetch } from '../../hooks';
 import { api } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
@@ -63,9 +63,10 @@ export const FacturaEditPage = () => {
           <div className="page-title">Editar Factura/Gasto</div>
         </div>
       </div>
-      <FacturaForm initialData={data} onSubmit={handleSubmit} onCancel={handleCancel} saving={saving} />
+      <FacturaForm initialData={data} onSubmit={handleSubmit} />
       {data && <FacturaPagos ref={pagosRef} factura={data} />}
       <FacturaInsumosDetail ref={insumosRef} facturaId={id} />
+      <FormActions formId="factura-form" onCancel={handleCancel} saving={saving} />
     </div>
   );
 };

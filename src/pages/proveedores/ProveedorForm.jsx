@@ -22,22 +22,22 @@ export const ProveedorForm = ({ initialData, onSubmit, onCancel, saving }) => {
     <form onSubmit={handleSubmit(onSubmit)}>
       <div className="card">
         <div className="card-header"><h3 className="card-title">Información del Proveedor</h3></div>
-        <div className="card-body grid-2">
+        <div className="card-body form-row">
           {initialData?.id != null && (
-            <Field label="Id">
+            <Field label="Id" size="xs">
               <input className="form-input" value={initialData.id} readOnly style={{ background: 'var(--gray-50)' }} />
             </Field>
           )}
           <Field label="Nombre" required error={errors.nombre?.message}>
             <input {...register('nombre')} className={`form-input ${errors.nombre ? 'error' : ''}`} />
           </Field>
-          <Field label="CUIT" required error={errors.cuit?.message}>
+          <Field label="CUIT" required error={errors.cuit?.message} size="sm">
             <input {...register('cuit')} className={`form-input ${errors.cuit ? 'error' : ''}`} />
           </Field>
-          <Field label="Teléfono" error={errors.telefono?.message}>
+          <Field label="Teléfono" error={errors.telefono?.message} size="sm">
             <input {...register('telefono')} className="form-input" />
           </Field>
-          <Field label="Email" error={errors.email?.message}>
+          <Field label="Email" error={errors.email?.message} size="md">
             <input {...register('email')} type="email" className={`form-input ${errors.email ? 'error' : ''}`} />
           </Field>
           <Field label="Dirección" error={errors.direccion?.message} span={2}>

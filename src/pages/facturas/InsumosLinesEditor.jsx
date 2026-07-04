@@ -93,19 +93,21 @@ export const InsumosLinesEditor = ({ items, loading = false, onAdd, onRemove, re
           </button>
         </>}
       >
-        <div className="form-group">
-          <label className="form-label">Insumo</label>
-          <EntityPicker
-            resource="/costos/insumos"
-            searchField="nombre"
-            value={selectedInsumo}
-            onChange={setSelectedInsumo}
-            onSelectRow={setSelectedInsumoRow}
-          />
-        </div>
-        <div className="form-group">
-          <label className="form-label">Cantidad</label>
-          <input type="number" step="any" className="form-input" value={cantidad} onChange={e => setCantidad(e.target.value)} />
+        <div className="form-row">
+          <div className="form-group">
+            <label className="form-label">Insumo</label>
+            <EntityPicker
+              resource="/costos/insumos"
+              searchField="nombre"
+              value={selectedInsumo}
+              onChange={setSelectedInsumo}
+              onSelectRow={setSelectedInsumoRow}
+            />
+          </div>
+          <div className="form-group field-w-sm">
+            <label className="form-label">Cantidad</label>
+            <input type="number" step="any" className="form-input" value={cantidad} onChange={e => setCantidad(e.target.value)} />
+          </div>
         </div>
       </Modal>
 

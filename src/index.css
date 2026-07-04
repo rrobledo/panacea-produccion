@@ -82,6 +82,12 @@ body {
 .form-hint { font-size: 12px; color: var(--gray-500); }
 .form-textarea { resize: vertical; min-height: 80px; }
 
+/* Field width by data type — a date or a short number shouldn't stretch to
+   fill a whole grid column just because it sits next to a Nombre field. */
+.field-xs { max-width: 90px; }   /* short counts: prioridad, semana, id */
+.field-sm { max-width: 150px; }  /* dates, most numbers, short codes (CUIT) */
+.field-md { max-width: 220px; }  /* selects, medium text */
+
 /* ===== CARDS ===== */
 .card {
   background: var(--white); border-radius: var(--radius-lg);
@@ -196,10 +202,19 @@ tr:last-child td { border-bottom: none; }
 .justify-end { justify-content: flex-end; }
 .gap-2 { gap: 8px; } .gap-3 { gap: 12px; } .gap-4 { gap: 16px; }
 .grid { display: grid; }
-.grid-2 { grid-template-columns: 1fr 1fr; gap: 16px; }
-.grid-3 { grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
-.grid-4 { grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+.grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; }
 .col-span-2 { grid-column: span 2; }
+
+/* Wraps fields by their natural width instead of forcing them into equal
+   columns — short fields (CUIT, fecha, xs/sm/md) share a line, wide ones
+   (Nombre, Dirección) grow or drop to their own line. */
+.form-row { display: flex; flex-wrap: wrap; gap: 16px; }
+.form-row > .form-group { flex: 1 1 200px; }
+.form-row > .form-group.field-w-xs { flex: 0 1 100px; }
+.form-row > .form-group.field-w-sm { flex: 0 1 160px; }
+.form-row > .form-group.field-w-md { flex: 0 1 240px; }
 .w-full { width: 100%; }
 .text-sm { font-size: 12px; } .text-lg { font-size: 16px; }
 .font-semibold { font-weight: 600; } .font-bold { font-weight: 700; }
@@ -253,6 +268,10 @@ tr:last-child td { border-bottom: none; }
 @media (max-width: 768px) {
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
   .col-span-2 { grid-column: span 1; }
+  .form-row > .form-group,
+  .form-row > .form-group.field-w-xs,
+  .form-row > .form-group.field-w-sm,
+  .form-row > .form-group.field-w-md { flex-basis: 100%; }
   .hide-mobile { display: none; }
 }
 

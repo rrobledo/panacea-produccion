@@ -89,26 +89,26 @@ export const FacturaPagos = forwardRef(({ factura }, ref) => {
           </button>
         </>}
       >
-        <div className="grid-2">
-          <div className="form-group">
+        <div className="form-row">
+          <div className="form-group field-w-sm">
             <label className="form-label">Número Comprobante</label>
             <input className="form-input" value={form.numero} onChange={e => setForm(f => ({ ...f, numero: e.target.value }))} />
           </div>
-          <div className="form-group">
+          <div className="form-group field-w-sm">
             <label className="form-label">Fecha de Pago</label>
             <input type="date" className="form-input" value={form.fecha_emision} onChange={e => setForm(f => ({ ...f, fecha_emision: e.target.value }))} />
           </div>
-          <div className="form-group">
+          <div className="form-group field-w-sm">
             <label className="form-label">Importe Total</label>
             <input type="number" step="0.01" className="form-input" value={form.importe_total} onChange={e => setForm(f => ({ ...f, importe_total: e.target.value }))} />
           </div>
-          <div className="form-group">
+          <div className="form-group field-w-md">
             <label className="form-label">Tipo de Pago</label>
             <select className="form-select" value={form.tipo_pago} onChange={e => setForm(f => ({ ...f, tipo_pago: e.target.value }))}>
               {TIPOS_PAGO.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
             </select>
           </div>
-          <div className="form-group">
+          <div className="form-group field-w-sm">
             <label className="form-label">Caja</label>
             <select className="form-select" value={form.caja} onChange={e => setForm(f => ({ ...f, caja: e.target.value }))}>
               {CAJAS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}

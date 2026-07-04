@@ -5,7 +5,6 @@ import { PageLoader, ErrorState, ConfirmDialog } from '../../components/ui';
 import { useList, useMutation, useConfirm } from '../../hooks';
 import { api } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
-import { formatCurrencyARS } from '../../utils/format';
 import { getErrorMessage } from '../../utils/errorMessage';
 
 export const ProductosPage = () => {
@@ -31,12 +30,8 @@ export const ProductosPage = () => {
   if (error) return <ErrorState message={getErrorMessage(error)} onRetry={refetch} />;
 
   const columns = [
-    { accessorKey: 'codigo', header: 'Código' },
     { accessorKey: 'nombre', header: 'Nombre' },
     { accessorKey: 'categoria', header: 'Categoría' },
-    { accessorKey: 'ref_id', header: 'Referencia' },
-    { accessorKey: 'utilidad', header: 'Utilidad' },
-    { accessorKey: 'precio_actual', header: 'Precio Actual', cell: ({ getValue }) => formatCurrencyARS(getValue()) },
     { accessorKey: 'lote_produccion', header: 'Lote Producción' },
     { accessorKey: 'unidad_medida', header: 'Medida' },
     { accessorKey: 'tiempo_produccion', header: 'Tiempo Producción' },

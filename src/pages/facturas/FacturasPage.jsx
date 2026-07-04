@@ -81,18 +81,18 @@ export const FacturasPage = () => {
       </div>
 
       <div className="card" style={{ marginBottom: 16 }}>
-        <div className="card-body grid-4">
-          <div className="form-group">
+        <div className="card-body form-row">
+          <div className="form-group field-w-sm">
             <label className="form-label">Fecha Desde</label>
             <input type="date" className="form-input" value={form.fecha_desde}
               onChange={e => setForm(f => ({ ...f, fecha_desde: e.target.value }))} />
           </div>
-          <div className="form-group">
+          <div className="form-group field-w-sm">
             <label className="form-label">Fecha Hasta</label>
             <input type="date" className="form-input" value={form.fecha_hasta}
               onChange={e => setForm(f => ({ ...f, fecha_hasta: e.target.value }))} />
           </div>
-          <div className="form-group">
+          <div className="form-group field-w-md">
             <label className="form-label">Estado</label>
             <select className="form-select" value={form.estado}
               onChange={e => setForm(f => ({ ...f, estado: e.target.value }))}>

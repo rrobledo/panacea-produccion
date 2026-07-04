@@ -41,7 +41,7 @@ export const ImageField = ({ value, onChange, label }) => {
       onFocus={() => setFocused(true)}
       onBlur={() => setFocused(false)}
       className="form-group"
-      style={{ border: '1px dashed var(--gray-300)', borderRadius: 8, padding: 12, outline: 'none' }}
+      style={{ border: '1px dashed var(--gray-300)', borderRadius: 8, padding: 12, outline: 'none', minWidth: 0 }}
     >
       {label && <label className="form-label">{label}</label>}
       {preview ? (

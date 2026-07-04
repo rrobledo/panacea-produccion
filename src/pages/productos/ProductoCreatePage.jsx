@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ProductoForm } from './ProductoForm';
 import { CostosLinesEditor } from './CostosLinesEditor';
+import { FormActions } from '../../components/ui';
 import { useStagedList } from '../../hooks/useStagedList';
 import { api } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
@@ -63,8 +64,9 @@ export const ProductoCreatePage = () => {
           <div className="page-title">Nuevo Producto</div>
         </div>
       </div>
-      <ProductoForm onSubmit={handleSubmit} onCancel={handleCancel} saving={saving} />
+      <ProductoForm onSubmit={handleSubmit} />
       <CostosLinesEditor items={costos.items} onAdd={costos.add} onEdit={costos.edit} onRemove={costos.remove} />
+      <FormActions formId="producto-form" onCancel={handleCancel} saving={saving} />
     </div>
   );
 };

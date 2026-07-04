@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ProductoForm } from './ProductoForm';
 import { ProductoCostosDetail } from './ProductoCostosDetail';
-import { PageLoader, ErrorState } from '../../components/ui';
+import { PageLoader, ErrorState, FormActions } from '../../components/ui';
 import { useFetch } from '../../hooks';
 import { api } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
@@ -55,8 +55,9 @@ export const ProductoEditPage = () => {
           <div className="page-title">Editar Producto</div>
         </div>
       </div>
-      <ProductoForm initialData={data} onSubmit={handleSubmit} onCancel={handleCancel} saving={saving} isEdit />
+      <ProductoForm initialData={data} onSubmit={handleSubmit} isEdit />
       <ProductoCostosDetail ref={costosRef} productoId={id} />
+      <FormActions formId="producto-form" onCancel={handleCancel} saving={saving} />
     </div>
   );
 };

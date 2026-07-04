@@ -1,7 +1,6 @@
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Save, X } from 'lucide-react';
 import { Field } from '../../components/ui';
 import { EntityPicker } from '../../components/form/EntityPicker';
 import { ImageField } from '../../components/form/ImageField';
@@ -21,7 +20,7 @@ const schema = z.object({
   image2: z.string().nullable().optional(),
 });
 
-export const FacturaForm = ({ initialData, onSubmit, onCancel, saving }) => {
+export const FacturaForm = ({ initialData, onSubmit }) => {
   const { register, handleSubmit, control, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -36,10 +35,10 @@ export const FacturaForm = ({ initialData, onSubmit, onCancel, saving }) => {
   const submit = (data) => onSubmit({ ...data, tipo_movimiento: 'FACTURA' });
 
   return (
-    <form onSubmit={handleSubmit(submit)}>
+    <form id="factura-form" onSubmit={handleSubmit(submit)}>
       <div className="card">
         <div className="card-header"><h3 className="card-title">Factura / Gasto</h3></div>
-        <div className="card-body grid-3">
+        <div className="card-body form-row">
           <Field label="Proveedor" required error={errors.proveedor?.message} span={2}>
             <Controller
               name="proveedor"
@@ -49,32 +48,32 @@ export const FacturaForm = ({ initialData, onSubmit, onCancel, saving }) => {
               )}
             />
           </Field>
-          <Field label="Número Comprobante" required error={errors.numero?.message}>
+          <Field label="Número Comprobante" required error={errors.numero?.message} size="sm">
             <input {...register('numero')} className={`form-input ${errors.numero ? 'error' : ''}`} />
           </Field>
 
-          <Field label="Fecha" required error={errors.fecha_emision?.message}>
+          <Field label="Fecha" required error={errors.fecha_emision?.message} size="sm">
             <input {...register('fecha_emision')} type="date" className={`form-input ${errors.fecha_emision ? 'error' : ''}`} />
           </Field>
-          <Field label="Fecha Vencimiento" error={errors.fecha_vencimiento?.message}>
+          <Field label="Fecha Vencimiento" error={errors.fecha_vencimiento?.message} size="sm">
             <input {...register('fecha_vencimiento')} type="date" className="form-input" />
           </Field>
-          <Field label="Importe Total" required error={errors.importe_total?.message}>
+          <Field label="Importe Total" required error={errors.importe_total?.message} size="sm">
             <input {...register('importe_total')} type="number" step="0.01" className={`form-input ${errors.importe_total ? 'error' : ''}`} placeholder="0.00" />
           </Field>
 
-          <Field label="Categoría" required error={errors.categoria?.message}>
+          <Field label="Categoría" required error={errors.categoria?.message} size="md">
             <select {...register('categoria')} className={`form-select ${errors.categoria ? 'error' : ''}`}>
               <option value="">Seleccione categoría</option>
               {CATEGORIAS_GASTO.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
             </select>
           </Field>
-          <Field label="Tipo de Pago" error={errors.tipo_pago?.message}>
+          <Field label="Tipo de Pago" error={errors.tipo_pago?.message} size="md">
             <select {...register('tipo_pago')} className="form-select">
               {TIPOS_PAGO.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
             </select>
           </Field>
-          <Field label="Caja" error={errors.caja?.message}>
+          <Field label="Caja" error={errors.caja?.message} size="sm">
             <select {...register('caja')} className="form-select">
               {CAJAS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
             </select>
@@ -92,18 +91,6 @@ export const FacturaForm = ({ initialData, onSubmit, onCancel, saving }) => {
           <Controller name="image2" control={control} render={({ field }) => (
             <ImageField label="Imagen 2" value={field.value} onChange={field.onChange} />
           )} />
-        </div>
-
-        <div className="card-footer">
-          <div className="flex justify-end gap-2">
-            <button type="button" className="btn btn-secondary" onClick={onCancel} disabled={saving}>
-              <X size={16} /> Cancelar
-            </button>
-            <button type="submit" className="btn btn-primary" disabled={saving}>
-              {saving ? <span className="spinner" style={{ width: 16, height: 16 }} /> : <Save size={16} />}
-              {saving ? 'Guardando…' : 'Guardar'}
-            </button>
-          </div>
         </div>
       </div>
     </form>

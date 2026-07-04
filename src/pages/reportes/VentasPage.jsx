@@ -30,20 +30,20 @@ export const VentasPage = () => {
       </div>
 
       <div className="card" style={{ marginBottom: 16 }}>
-        <div className="card-body grid-4">
-          <div className="form-group">
+        <div className="card-body form-row">
+          <div className="form-group field-w-xs">
             <label className="form-label">Año</label>
             <select className="form-select" value={filters.anio} onChange={e => setFilters(f => ({ ...f, anio: Number(e.target.value) }))}>
               {ANIOS.map(y => <option key={y} value={y}>{y}</option>)}
             </select>
           </div>
-          <div className="form-group">
+          <div className="form-group field-w-md">
             <label className="form-label">Mes</label>
             <select className="form-select" value={filters.mes} onChange={e => setFilters(f => ({ ...f, mes: Number(e.target.value) }))}>
               {MESES_CON_TODOS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
             </select>
           </div>
-          <div className="form-group">
+          <div className="form-group field-w-md">
             <label className="form-label">Cliente</label>
             <input className="form-input" value={filters.cliente} onChange={e => setFilters(f => ({ ...f, cliente: e.target.value }))} placeholder="Todos" />
           </div>
