@@ -1,0 +1,22 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+dist-ssr
+
+# Environment variables (keep .env.example tracked)
+.env
+.env.local
+.env.*.local
+
+# Editor/OS
+.DS_Store
+*.local
+
+# Claude Code local settings (machine-specific permissions, not shared)
+.claude/settings.local.json
+
+# Logs
+*.log
+npm-debug.log*

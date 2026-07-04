@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    { "source": "/auth/:path*", "destination": "https://panacea-produccion-backend.vercel.app/auth/:path*" },
+    { "source": "/costos/:path*", "destination": "https://panacea-produccion-backend.vercel.app/costos/:path*" },
+    { "source": "/profile/:path*", "destination": "https://panacea-produccion-backend.vercel.app/profile/:path*" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    }
+  ]
+}
