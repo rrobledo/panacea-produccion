@@ -33,6 +33,8 @@ export const InsumosPage = () => {
   const columns = [
     { accessorKey: 'nombre', header: 'Nombre' },
     { accessorKey: 'cantidad', header: 'Cantidad' },
+    { accessorKey: 'comprometido', header: 'Comprometido' },
+    { accessorKey: 'disponible', header: 'Disponible' },
     { accessorKey: 'unidad_medida', header: 'Unidad de Medida' },
     { accessorKey: 'precio', header: 'Precio', cell: ({ getValue }) => formatCurrencyARS(getValue()) },
     {

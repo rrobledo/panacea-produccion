@@ -52,7 +52,7 @@ export const PrintableReport = ({ title, subtitle, data = [], columns = [], summ
               {subtitle && <div style={{ fontSize: 14, color: 'var(--gray-500)', marginTop: 4 }}>{subtitle}</div>}
             </div>
             <div style={{ textAlign: 'right', fontSize: 12, color: 'var(--gray-500)' }}>
-              <div style={{ fontWeight: 600 }}>EnterpriseApp</div>
+              <div style={{ fontWeight: 600 }}>Panacea Producción</div>
               <div>Generated: {now}</div>
             </div>
           </div>

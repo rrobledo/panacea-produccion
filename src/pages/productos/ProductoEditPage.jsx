@@ -56,6 +56,12 @@ export const ProductoEditPage = () => {
         </div>
       </div>
       <ProductoForm initialData={data} onSubmit={handleSubmit} isEdit />
+      {data?.producto_base && (
+        <div className="alert alert-info" style={{ marginTop: 16 }}>
+          Vinculado al producto base <strong>{data.producto_base.nombre}</strong> — este producto usa el BOM de esa
+          base; los Costos de acá abajo son solo insumos adicionales propios (opcionales).
+        </div>
+      )}
       <ProductoCostosDetail ref={costosRef} productoId={id} />
       <FormActions formId="producto-form" onCancel={handleCancel} saving={saving} />
     </div>

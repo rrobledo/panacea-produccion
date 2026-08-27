@@ -12,7 +12,7 @@ const schema = z.object({
   precio: z.coerce.number({ message: 'Ingrese el precio' }),
 });
 
-export const InsumoForm = ({ initialData, onSubmit, onCancel, saving }) => {
+export const InsumoForm = ({ initialData, onSubmit, onCancel, saving, isEdit }) => {
   const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
     defaultValues: { nombre: '', cantidad: '', unidad_medida: '', precio: '', ...initialData },
@@ -31,8 +31,21 @@ export const InsumoForm = ({ initialData, onSubmit, onCancel, saving }) => {
           <Field label="Nombre" required error={errors.nombre?.message}>
             <input {...register('nombre')} className={`form-input ${errors.nombre ? 'error' : ''}`} placeholder="Nombre del insumo" />
           </Field>
-          <Field label="Cantidad" required error={errors.cantidad?.message} size="sm">
-            <input {...register('cantidad')} type="number" step="any" className={`form-input ${errors.cantidad ? 'error' : ''}`} />
+          <Field
+            label="Cantidad"
+            required={!isEdit}
+            error={errors.cantidad?.message}
+            hint={isEdit ? 'Solo lectura — usá "Ajustar Stock" para modificarla' : undefined}
+            size="sm"
+          >
+            <input
+              {...register('cantidad')}
+              type="number"
+              step="any"
+              readOnly={isEdit}
+              className={`form-input ${errors.cantidad ? 'error' : ''}`}
+              style={isEdit ? { background: 'var(--gray-50)' } : undefined}
+            />
           </Field>
           <Field label="Unidad de Medida" required error={errors.unidad_medida?.message} size="md">
             <select {...register('unidad_medida')} className={`form-select ${errors.unidad_medida ? 'error' : ''}`}>

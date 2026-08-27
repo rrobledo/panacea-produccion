@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import {
   LayoutDashboard, FileText,
   LogOut, Menu, X, ChevronDown, Bell, Search,
-  Package, ClipboardList, ChevronRight, Truck
+  Package, ClipboardList, ChevronRight, Truck, Factory, MapPin
 } from 'lucide-react';
 import './layout.css';
 
@@ -12,6 +12,13 @@ const NAV = [
   { label: 'Dashboard', icon: LayoutDashboard, to: '/' },
   { label: 'Productos', icon: Package, to: '/productos' },
   { label: 'Programación', icon: ClipboardList, to: '/programacion' },
+  {
+    label: 'Producción', icon: Factory, children: [
+      { label: 'Órdenes de Producción', to: '/ordenes-produccion' },
+      { label: 'Producto Fabricado', to: '/productos-fabricados' },
+    ]
+  },
+  { label: 'Ubicaciones', icon: MapPin, to: '/ubicaciones' },
   {
     label: 'Proveedores', icon: Truck, children: [
       { label: 'Insumos', to: '/insumos' },
@@ -92,8 +99,8 @@ export const AppLayout = ({ children }) => {
       <aside className={`sidebar ${sidebarOpen ? 'mobile-open' : ''}`}>
         <div className="sidebar-header">
           <div className="logo">
-            <div className="logo-icon">E</div>
-            {!collapsed && <span className="logo-text">EnterpriseApp</span>}
+            <div className="logo-icon">P</div>
+            {!collapsed && <span className="logo-text">Panacea Producción</span>}
           </div>
           <button className="btn btn-ghost btn-icon hide-mobile" onClick={() => setCollapsed(c => !c)}>
             <Menu size={16} />

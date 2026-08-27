@@ -3,7 +3,6 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import { AppLayout } from './components/layout/AppLayout';
 import { LoginPage } from './components/auth/LoginPage';
-import { OAuthCallback } from './components/auth/OAuthCallback';
 import { DashboardPage } from './pages/DashboardPage';
 import { PageLoader } from './components/ui';
 import { ProveedoresPage } from './pages/proveedores/ProveedoresPage';
@@ -15,6 +14,12 @@ import { InsumoEditPage } from './pages/insumos/InsumoEditPage';
 import { ProductosPage } from './pages/productos/ProductosPage';
 import { ProductoCreatePage } from './pages/productos/ProductoCreatePage';
 import { ProductoEditPage } from './pages/productos/ProductoEditPage';
+import { UbicacionesPage } from './pages/ubicaciones/UbicacionesPage';
+import { UbicacionCreatePage } from './pages/ubicaciones/UbicacionCreatePage';
+import { UbicacionEditPage } from './pages/ubicaciones/UbicacionEditPage';
+import { OrdenesProduccionPage } from './pages/ordenes-produccion/OrdenesProduccionPage';
+import { OrdenProduccionDetailPage } from './pages/ordenes-produccion/OrdenProduccionDetailPage';
+import { ProductosFabricadosPage } from './pages/ordenes-produccion/ProductosFabricadosPage';
 import { FacturasPage } from './pages/facturas/FacturasPage';
 import { FacturaCreatePage } from './pages/facturas/FacturaCreatePage';
 import { FacturaEditPage } from './pages/facturas/FacturaEditPage';
@@ -54,7 +59,6 @@ function App() {
         <ToastProvider>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/auth/callback" element={<OAuthCallback />} />
             <Route path="/*" element={
               <PrivateRoute>
                 <AppLayout>
@@ -75,6 +79,16 @@ function App() {
                     <Route path="/productos"            element={<ProductosPage />} />
                     <Route path="/productos/create"     element={<ProductoCreatePage />} />
                     <Route path="/productos/:id/edit"   element={<ProductoEditPage />} />
+
+                    {/* UBICACIONES */}
+                    <Route path="/ubicaciones"            element={<UbicacionesPage />} />
+                    <Route path="/ubicaciones/create"     element={<UbicacionCreatePage />} />
+                    <Route path="/ubicaciones/:id/edit"   element={<UbicacionEditPage />} />
+
+                    {/* ORDENES DE PRODUCCION */}
+                    <Route path="/ordenes-produccion"      element={<OrdenesProduccionPage />} />
+                    <Route path="/ordenes-produccion/:id"  element={<OrdenProduccionDetailPage />} />
+                    <Route path="/productos-fabricados"    element={<ProductosFabricadosPage />} />
 
                     {/* FACTURAS/GASTOS (ctacteprov) */}
                     <Route path="/ctacteprov"            element={<FacturasPage />} />

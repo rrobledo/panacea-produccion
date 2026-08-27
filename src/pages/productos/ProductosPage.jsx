@@ -1,16 +1,21 @@
 import { useNavigate } from 'react-router-dom';
 import { Plus, Check } from 'lucide-react';
 import { DataGrid } from '../../components/grid/DataGrid';
-import { PageLoader, ErrorState, ConfirmDialog } from '../../components/ui';
+import { PageLoader, ErrorState, ConfirmDialog, Select } from '../../components/ui';
 import { useList, useMutation, useConfirm } from '../../hooks';
 import { api } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import { getErrorMessage } from '../../utils/errorMessage';
 
+const PRODUCTO_FINAL_OPTIONS = [
+  { value: 'true', label: 'Sí' },
+  { value: 'false', label: 'No' },
+];
+
 export const ProductosPage = () => {
   const navigate = useNavigate();
   const toast = useToast();
-  const { items, loading, error, refetch } = useList('/costos/productos');
+  const { items, loading, error, params, filter, refetch } = useList('/costos/productos', { solo_habilitados: true });
   const { confirm, dialog, resolve } = useConfirm();
 
   const { mutate: remove } = useMutation((id) => api.delete(`/costos/productos/${id}`), {
@@ -36,6 +41,7 @@ export const ProductosPage = () => {
     { accessorKey: 'unidad_medida', header: 'Medida' },
     { accessorKey: 'tiempo_produccion', header: 'Tiempo Producción' },
     { accessorKey: 'habilitado', header: 'Habilitado', cell: ({ getValue }) => getValue() ? <Check size={16} color="var(--success)" /> : null },
+    { accessorKey: 'is_producto', header: 'Producto Final', cell: ({ getValue }) => getValue() ? <Check size={16} color="var(--success)" /> : null },
     { accessorKey: 'prioridad', header: 'Prioridad' },
     {
       id: 'actions', header: '',
@@ -60,7 +66,22 @@ export const ProductosPage = () => {
         </button>
       </div>
 
-      <DataGrid columns={columns} data={items} loading={loading} title="Productos" emptyText="No hay productos registrados" />
+      <DataGrid
+        columns={columns}
+        data={items}
+        loading={loading}
+        title="Productos"
+        emptyText="No hay productos registrados"
+        actions={
+          <Select
+            options={PRODUCTO_FINAL_OPTIONS}
+            value={params.is_producto ?? ''}
+            onChange={(v) => filter({ is_producto: v === '' ? undefined : v })}
+            placeholder="Producto Final: Todos"
+            style={{ width: 190 }}
+          />
+        }
+      />
 
       <ConfirmDialog
         open={!!dialog}

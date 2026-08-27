@@ -21,6 +21,7 @@ export const EntityPicker = ({
   idField = 'id',
   placeholder = 'Buscar…',
   disabled = false,
+  params = {},          // optional extra static query params (e.g. { is_producto: false })
 }) => {
   const displayField = labelField || searchField;
   const [label, setLabel] = useState('');
@@ -61,13 +62,14 @@ export const EntityPicker = ({
         return;
       }
       setLoading(true);
-      api.get(resource, { params: { [searchField]: debouncedQuery } })
+      api.get(resource, { params: { [searchField]: debouncedQuery, ...params } })
         .then(res => { if (!cancelled) setResults(res.data || []); })
         .catch(() => { if (!cancelled) setResults([]); })
         .finally(() => { if (!cancelled) setLoading(false); });
     });
     return () => { cancelled = true; };
-  }, [open, queryTooShort, debouncedQuery, resource, searchField]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, queryTooShort, debouncedQuery, resource, searchField, JSON.stringify(params)]);
 
   const select = useCallback((row) => {
     onChange(row[idField]);

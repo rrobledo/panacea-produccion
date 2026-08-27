@@ -40,8 +40,9 @@
   flex-shrink: 0;
 }
 .logo-text {
-  font-weight: 700; font-size: 15px;
+  font-weight: 700; font-size: 14px;
   color: white; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
 }
 
 .sidebar-nav {

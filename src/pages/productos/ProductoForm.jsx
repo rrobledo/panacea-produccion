@@ -3,12 +3,13 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Field, Tabs } from '../../components/ui';
+import { EntityPicker } from '../../components/form/EntityPicker';
 import { CATEGORIAS, UNIDADES_MEDIDA_PRODUCTO } from './constants';
 
 const TABS = [
   {
     value: 'basica', label: 'Información Básica',
-    fields: ['codigo', 'nombre', 'categoria', 'ref_id', 'lote_produccion', 'unidad_medida', 'tiempo_produccion', 'prioridad'],
+    fields: ['codigo', 'nombre', 'categoria', 'ref_id', 'lote_produccion', 'unidad_medida', 'tiempo_produccion', 'prioridad', 'producto_base_id'],
   },
   { value: 'precios', label: 'Precios y Márgenes', fields: ['precio_actual', 'utilidad'] },
 ];
@@ -26,6 +27,7 @@ const schema = z.object({
   unidad_medida: z.string().min(1, 'Seleccione la unidad'),
   tiempo_produccion: z.coerce.number({ message: 'Ingrese el tiempo' }).min(0),
   prioridad: z.coerce.number({ message: 'Ingrese la prioridad' }).min(0),
+  producto_base_id: z.union([z.number(), z.null()]).optional(),
 });
 
 const Toggle = ({ label, value, onChange }) => (
@@ -50,15 +52,25 @@ const Toggle = ({ label, value, onChange }) => (
 
 export const ProductoForm = ({ initialData, onSubmit, isEdit }) => {
   const [activeTab, setActiveTab] = useState('basica');
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
+  const { register, handleSubmit, watch, setValue, setError, clearErrors, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
       codigo: '', nombre: '', categoria: '', habilitado: true, is_producto: true,
       ref_id: '', precio_actual: '', utilidad: '', lote_produccion: '',
       unidad_medida: '', tiempo_produccion: '', prioridad: '',
+      producto_base_id: null,
       ...initialData,
     },
   });
+
+  const selectProductoBase = (row) => {
+    if (initialData?.id != null && row.id === initialData.id) {
+      setError('producto_base_id', { message: 'Un producto no puede ser su propio producto base' });
+      return;
+    }
+    clearErrors('producto_base_id');
+    setValue('producto_base_id', row.id);
+  };
 
   // Jump to the first tab that has a validation error so it isn't hidden from the user.
   const onInvalid = (formErrors) => {
@@ -103,6 +115,26 @@ export const ProductoForm = ({ initialData, onSubmit, isEdit }) => {
             <Toggle label="Producto Final" value={watch('is_producto')} onChange={v => setValue('is_producto', v)} />
             <Field label="Id Referencia" required error={errors.ref_id?.message} size="sm">
               <input {...register('ref_id')} type="number" className={`form-input ${errors.ref_id ? 'error' : ''}`} placeholder="ID externo" />
+            </Field>
+          </div>
+
+          <hr className="divider" />
+
+          <div className="form-row">
+            <Field
+              label="Producto Base"
+              error={errors.producto_base_id?.message}
+              hint="Opcional — el producto intermedio (masa) del que se arma este producto"
+            >
+              <EntityPicker
+                resource="/costos/productos"
+                searchField="nombre"
+                params={{ is_producto: false }}
+                value={watch('producto_base_id')}
+                onChange={(v) => { clearErrors('producto_base_id'); setValue('producto_base_id', v); }}
+                onSelectRow={selectProductoBase}
+                placeholder="Buscar producto intermedio…"
+              />
             </Field>
           </div>
 
