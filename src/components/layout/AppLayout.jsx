@@ -15,6 +15,7 @@ const NAV = [
   {
     label: 'Producción', icon: Factory, children: [
       { label: 'Órdenes de Producción', to: '/ordenes-produccion' },
+      { label: 'Semana de Producción', to: '/produccion/semana' },
       { label: 'Producto Fabricado', to: '/productos-fabricados' },
     ]
   },

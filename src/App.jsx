@@ -20,6 +20,7 @@ import { UbicacionCreatePage } from './pages/ubicaciones/UbicacionCreatePage';
 import { UbicacionEditPage } from './pages/ubicaciones/UbicacionEditPage';
 import { OrdenesProduccionPage } from './pages/ordenes-produccion/OrdenesProduccionPage';
 import { GenerarOrdenesPreviewPage } from './pages/ordenes-produccion/GenerarOrdenesPreviewPage';
+import { SemanaProduccionPage } from './pages/ordenes-produccion/SemanaProduccionPage';
 import { OrdenProduccionDetailPage } from './pages/ordenes-produccion/OrdenProduccionDetailPage';
 import { ProductosFabricadosPage } from './pages/ordenes-produccion/ProductosFabricadosPage';
 import { FacturasPage } from './pages/facturas/FacturasPage';
@@ -94,6 +95,8 @@ function App() {
                     <Route path="/ordenes-produccion/generar" element={<GenerarOrdenesPreviewPage />} />
                     <Route path="/ordenes-produccion/:id"     element={<OrdenProduccionDetailPage />} />
                     <Route path="/productos-fabricados"    element={<ProductosFabricadosPage />} />
+                    {/* Fuera de /ordenes-produccion: ahí ya hay un :id dinámico. */}
+                    <Route path="/produccion/semana"       element={<SemanaProduccionPage />} />
 
                     {/* FACTURAS/GASTOS (ctacteprov) */}
                     <Route path="/ctacteprov"            element={<FacturasPage />} />
