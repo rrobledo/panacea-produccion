@@ -1,5 +1,5 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { addDays, format } from 'date-fns';
 import { ArrowLeft, Wand2, AlertTriangle, ChevronRight, ChevronDown } from 'lucide-react';
 import { PageLoader, ErrorState, EmptyState } from '../../components/ui';
@@ -32,7 +32,16 @@ export const GenerarOrdenesPreviewPage = () => {
   const navigate = useNavigate();
   const toast = useToast();
 
-  const fecha = useMemo(() => format(addDays(new Date(), 1), 'yyyy-MM-dd'), []);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const hoy = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
+  const manana = useMemo(() => format(addDays(new Date(), 1), 'yyyy-MM-dd'), []);
+
+  // La fecha vive en la URL para que sobreviva a un refresh y se pueda
+  // compartir el enlace. Por defecto mañana, que es el caso habitual. No se
+  // permite generar hacia atrás: un valor anterior a hoy en el query param
+  // cae de vuelta a mañana.
+  const fechaParam = searchParams.get('fecha');
+  const fecha = fechaParam && fechaParam >= hoy ? fechaParam : manana;
 
   // Estructura de órdenes y líneas del primer preview (sin overrides). No se
   // reemplaza con los recálculos: si el usuario pone una línea en 0 el backend
@@ -115,6 +124,20 @@ export const GenerarOrdenesPreviewPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedOverrides, base, requestPreview]);
 
+  const cambiarFecha = (nueva) => {
+    if (!nueva || nueva < hoy || nueva === fecha) return;
+    // Todo lo editado apunta a filas de Programación de la fecha anterior:
+    // no tiene sentido arrastrarlo al nuevo día.
+    setOverrides({});
+    setDeseleccionadas(new Set());
+    setExpandidas(new Set());
+    setInsumosByKey({});
+    setRecalculando(false);
+    setError(null);
+    setLoading(true);
+    setSearchParams({ fecha: nueva }, { replace: true });
+  };
+
   const setCantidad = (programacion_id, value) => {
     setOverrides(prev => ({ ...prev, [programacion_id]: value }));
     // Se marca acá y no en el efecto: el indicador tiene que cubrir también
@@ -196,16 +219,6 @@ export const GenerarOrdenesPreviewPage = () => {
     }
   );
 
-  if (loading) return <PageLoader />;
-  if (error) {
-    return (
-      <ErrorState
-        message={getErrorMessage(error)}
-        onRetry={() => { setLoading(true); setError(null); setReintento(n => n + 1); }}
-      />
-    );
-  }
-
   return (
     <div>
       <div className="page-header">
@@ -214,8 +227,20 @@ export const GenerarOrdenesPreviewPage = () => {
             <ArrowLeft size={14} /> Volver
           </button>
           <div className="page-title">Vista Previa de Órdenes</div>
-          <div className="page-subtitle">
-            Fecha de fabricación {fecha} · nada se crea hasta confirmar
+          <div className="page-subtitle flex items-center gap-2" style={{ flexWrap: 'wrap' }}>
+            <label htmlFor="fecha-fabricacion">Fecha de fabricación</label>
+            <input
+              id="fecha-fabricacion"
+              type="date"
+              className="form-input"
+              style={{ width: 170 }}
+              value={fecha}
+              min={hoy}
+              onChange={(e) => cambiarFecha(e.target.value)}
+            />
+            {fecha === hoy && <span className="badge badge-gray">Hoy</span>}
+            {fecha === manana && <span className="badge badge-gray">Mañana</span>}
+            <span>· nada se crea hasta confirmar</span>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -225,7 +250,7 @@ export const GenerarOrdenesPreviewPage = () => {
           <button
             className="btn btn-primary btn-sm"
             onClick={() => generar()}
-            disabled={generando || hayInvalidas || aGenerar === 0}
+            disabled={generando || loading || !!error || hayInvalidas || aGenerar === 0}
           >
             <Wand2 size={14} />
             {generando ? 'Generando…' : `Confirmar y Generar (${aGenerar})`}
@@ -233,11 +258,18 @@ export const GenerarOrdenesPreviewPage = () => {
         </div>
       </div>
 
-      {base.length === 0 ? (
+      {loading ? (
+        <PageLoader />
+      ) : error ? (
+        <ErrorState
+          message={getErrorMessage(error)}
+          onRetry={() => { setLoading(true); setError(null); setReintento(n => n + 1); }}
+        />
+      ) : !base || base.length === 0 ? (
         <EmptyState
           icon={Wand2}
-          title="No hay nada programado para mañana"
-          description={`La Programación no tiene productos con plan para el ${fecha}, así que no hay órdenes para generar.`}
+          title="No hay nada programado para esa fecha"
+          description={`La Programación no tiene productos con plan para el ${fecha}, así que no hay órdenes para generar. Probá con otra fecha.`}
           action={
             <button className="btn btn-secondary btn-sm" onClick={() => navigate('/programacion')}>
               Ir a Programación

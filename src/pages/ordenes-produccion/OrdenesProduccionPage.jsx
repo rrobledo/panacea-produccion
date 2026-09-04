@@ -40,10 +40,10 @@ export const OrdenesProduccionPage = () => {
       <div className="page-header">
         <div className="page-header-left">
           <div className="page-title">Órdenes de Producción</div>
-          <div className="page-subtitle">Generadas desde la Programación del día siguiente</div>
+          <div className="page-subtitle">Generadas desde la Programación de la fecha que elijas</div>
         </div>
         <button className="btn btn-primary btn-sm" onClick={() => navigate('/ordenes-produccion/generar')}>
-          <Wand2 size={14} /> Generar Órdenes de Mañana
+          <Wand2 size={14} /> Generar Órdenes
         </button>
       </div>
 
