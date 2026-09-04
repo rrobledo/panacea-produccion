@@ -19,6 +19,7 @@ import { UbicacionesPage } from './pages/ubicaciones/UbicacionesPage';
 import { UbicacionCreatePage } from './pages/ubicaciones/UbicacionCreatePage';
 import { UbicacionEditPage } from './pages/ubicaciones/UbicacionEditPage';
 import { OrdenesProduccionPage } from './pages/ordenes-produccion/OrdenesProduccionPage';
+import { GenerarOrdenesPreviewPage } from './pages/ordenes-produccion/GenerarOrdenesPreviewPage';
 import { OrdenProduccionDetailPage } from './pages/ordenes-produccion/OrdenProduccionDetailPage';
 import { ProductosFabricadosPage } from './pages/ordenes-produccion/ProductosFabricadosPage';
 import { FacturasPage } from './pages/facturas/FacturasPage';
@@ -88,8 +89,10 @@ function App() {
                     <Route path="/ubicaciones/:id/edit"   element={<UbicacionEditPage />} />
 
                     {/* ORDENES DE PRODUCCION */}
-                    <Route path="/ordenes-produccion"      element={<OrdenesProduccionPage />} />
-                    <Route path="/ordenes-produccion/:id"  element={<OrdenProduccionDetailPage />} />
+                    <Route path="/ordenes-produccion"         element={<OrdenesProduccionPage />} />
+                    {/* Antes de /:id — si no, "generar" matchea como un id. */}
+                    <Route path="/ordenes-produccion/generar" element={<GenerarOrdenesPreviewPage />} />
+                    <Route path="/ordenes-produccion/:id"     element={<OrdenProduccionDetailPage />} />
                     <Route path="/productos-fabricados"    element={<ProductosFabricadosPage />} />
 
                     {/* FACTURAS/GASTOS (ctacteprov) */}

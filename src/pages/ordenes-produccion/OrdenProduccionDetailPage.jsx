@@ -8,6 +8,7 @@ import { useFetch, useMutation, useConfirm } from '../../hooks';
 import { api } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import { getErrorMessage } from '../../utils/errorMessage';
+import { formatCantidadInsumo } from '../../utils/format';
 
 export const OrdenProduccionDetailPage = () => {
   const { id } = useParams();
@@ -101,7 +102,7 @@ export const OrdenProduccionDetailPage = () => {
             <thead><tr><th>Insumo</th><th>Cantidad</th><th>Unidad</th></tr></thead>
             <tbody>
               {orden.insumos.map(i => (
-                <tr key={i.id}><td>{i.insumo_nombre}</td><td>{i.cantidad}</td><td>{i.insumo_unidad_medida}</td></tr>
+                <tr key={i.id}><td>{i.insumo_nombre}</td><td>{formatCantidadInsumo(i.cantidad)}</td><td>{i.insumo_unidad_medida}</td></tr>
               ))}
             </tbody>
           </table>
