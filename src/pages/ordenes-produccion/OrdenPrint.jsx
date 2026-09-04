@@ -60,8 +60,10 @@ export const OrdenPrint = ({ orden, fabricados = [] }) => {
 
   return (
     <div className="card" style={{ marginTop: 20 }}>
-      <div className="card-header">
-        <h3 className="card-title">Orden Completa</h3>
+      {/* Sin título: es el único bloque de contenido del detalle, así que el
+          encabezado solo lleva la acción. `card-header` reparte con
+          space-between, de ahí el flex-end para que el botón quede a la derecha. */}
+      <div className="card-header" style={{ justifyContent: 'flex-end' }}>
         <button type="button" className="btn btn-secondary btn-sm no-print" onClick={handlePrint}>
           <Printer size={14} /> Imprimir Orden
         </button>
