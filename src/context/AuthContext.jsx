@@ -3,11 +3,6 @@ import { api, AUTH_STORAGE_KEY } from '../services/api';
 
 const AuthContext = createContext(null);
 
-const ALLOWED_EMAILS = (import.meta.env.VITE_ALLOWED_EMAILS || '')
-  .split(',')
-  .map(e => e.trim().toLowerCase())
-  .filter(Boolean);
-
 const decodeJwt = (token) => {
   try {
     const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
@@ -58,16 +53,11 @@ export const AuthProvider = ({ children }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const loginWithGoogle = useCallback(async (credential) => {
-    setAuthError(null);
-    const payload = decodeJwt(credential);
-    const email = payload?.email?.toLowerCase();
-    if (!email || !ALLOWED_EMAILS.includes(email)) {
-      throw new Error('no_autorizado');
-    }
-    const base = { email: payload.email, name: payload.name, picture: payload.picture };
-    setUser(base);
-    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(base));
+  const loginWithGoogle = useCallback(() => {
+    const redirectUri = `${window.location.origin}/auth/callback`;
+    const url = new URL('/auth/google', window.location.origin);
+    url.searchParams.set('redirect_uri', redirectUri);
+    window.location.href = url.toString();
   }, []);
 
   const loginWithCredentials = useCallback(async (email, password) => {
@@ -89,18 +79,30 @@ export const AuthProvider = ({ children }) => {
     await fetchProfile(base);
   }, [fetchProfile]);
 
+  const handleOAuthCallback = useCallback(async (token) => {
+    setAuthError(null);
+    const payload = decodeJwt(token);
+    if (!payload) {
+      setAuthError('Token inválido.');
+      return;
+    }
+    const base = { access_token: token, email: payload.email, id: payload.sub, role: payload.role };
+    setUser(base);
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(base));
+    await fetchProfile(base);
+  }, [fetchProfile]);
+
   const logout = useCallback(() => {
     setUser(null);
     setAuthError(null);
     localStorage.removeItem(AUTH_STORAGE_KEY);
-    window.google?.accounts.id.disableAutoSelect();
   }, []);
 
   return (
     <AuthContext.Provider value={{
       user, loading, authError,
       isAuthenticated: !!user,
-      loginWithGoogle, loginWithCredentials, logout,
+      loginWithGoogle, loginWithCredentials, handleOAuthCallback, logout,
     }}>
       {children}
     </AuthContext.Provider>

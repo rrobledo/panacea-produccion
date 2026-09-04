@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import { AppLayout } from './components/layout/AppLayout';
 import { LoginPage } from './components/auth/LoginPage';
+import { OAuthCallback } from './components/auth/OAuthCallback';
 import { DashboardPage } from './pages/DashboardPage';
 import { PageLoader } from './components/ui';
 import { ProveedoresPage } from './pages/proveedores/ProveedoresPage';
@@ -59,6 +60,7 @@ function App() {
         <ToastProvider>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/auth/callback" element={<OAuthCallback />} />
             <Route path="/*" element={
               <PrivateRoute>
                 <AppLayout>

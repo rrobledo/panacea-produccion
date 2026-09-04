@@ -15,6 +15,9 @@ export default defineConfig(({ mode }) => {
         '/auth': {
           target: BACKEND,
           changeOrigin: true,
+          // /auth/callback es una ruta del SPA (el redirect_uri que recibe el
+          // token del backend), no un endpoint del backend: no la proxyees.
+          bypass: (req) => (req.url.startsWith('/auth/callback') ? '/index.html' : undefined),
         },
         '/costos': {
           target: BACKEND,
