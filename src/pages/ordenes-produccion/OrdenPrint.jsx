@@ -1,14 +1,15 @@
-import { useRef } from 'react';
-import { useReactToPrint } from 'react-to-print';
-import { Printer } from 'lucide-react';
 import { ESTADO_LABELS } from './constants';
 import { formatCantidadInsumo } from '../../utils/format';
 
 // Orden de trabajo completa, para la carpeta de producción. A diferencia de la
 // oblea —que se pega en bandejas y carros a la vista de cualquiera, y por eso
 // omite los insumos a propósito— este documento sí lleva la receta explotada.
-// Son dos impresos con formato y audiencia distintos, de ahí que sean dos
-// componentes separados y dos acciones separadas en el detalle.
+//
+// NO se muestra en pantalla: repetía los productos y los insumos que el detalle
+// ya lista. Se renderiza en un contenedor de alto 0 con overflow oculto, porque
+// react-to-print clona este nodo para imprimirlo y necesita que exista en el
+// DOM con sus estilos calculados — con `display: none` el clon puede salir
+// vacío. El disparo vive en el detalle, que es quien tiene el botón.
 
 const fmtFechaHora = (iso) => {
   if (!iso) return null;
@@ -45,10 +46,7 @@ const th = {
 const td = { padding: '6px 10px', borderBottom: '1px solid var(--gray-200)', fontSize: 12 };
 const tabla = { width: '100%', borderCollapse: 'collapse' };
 
-export const OrdenPrint = ({ orden, fabricados = [] }) => {
-  const contentRef = useRef(null);
-  const handlePrint = useReactToPrint({ contentRef, documentTitle: `Orden-${orden.codigo}` });
-
+export const OrdenPrintDocument = ({ orden, fabricados = [], contentRef }) => {
   const fechas = [
     ['Creación', fmtFechaHora(orden.fecha_creacion)],
     ['En Producción', fmtFechaHora(orden.fecha_en_produccion)],
@@ -59,17 +57,9 @@ export const OrdenPrint = ({ orden, fabricados = [] }) => {
   const conDesperdicio = fabricados.filter(f => Number(f.cantidad_desperdicio) > 0);
 
   return (
-    <div className="card" style={{ marginTop: 20 }}>
-      {/* Sin título: es el único bloque de contenido del detalle, así que el
-          encabezado solo lleva la acción. `card-header` reparte con
-          space-between, de ahí el flex-end para que el botón quede a la derecha. */}
-      <div className="card-header" style={{ justifyContent: 'flex-end' }}>
-        <button type="button" className="btn btn-secondary btn-sm no-print" onClick={handlePrint}>
-          <Printer size={14} /> Imprimir Orden
-        </button>
-      </div>
-      <div className="card-body">
-        <div ref={contentRef} style={{ background: 'white', padding: 8 }}>
+    <div aria-hidden="true" style={{ height: 0, overflow: 'hidden' }}>
+      <div>
+        <div ref={contentRef} style={{ background: 'white', padding: 8, width: 794 }}>
           <style>{`@media print { @page { size: A4 portrait; margin: 15mm; } body { font-family: Arial, sans-serif; } }`}</style>
 
           {/* Encabezado */}
