@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Play, XCircle, ArrowLeft } from 'lucide-react';
 import { PageLoader, ErrorState, ConfirmDialog } from '../../components/ui';
 import { OblejaPrint } from './OblejaPrint';
+import { OrdenPrint } from './OrdenPrint';
 import { FinalizarOrdenSection } from './FinalizarOrdenSection';
 import { ESTADO_BADGE, ESTADO_LABELS } from './constants';
 import { useFetch, useMutation, useConfirm } from '../../hooks';
@@ -16,6 +18,19 @@ export const OrdenProduccionDetailPage = () => {
   const toast = useToast();
   const { data: orden, loading, error, refetch } = useFetch(`/costos/ordenes-produccion/${id}`);
   const { confirm, dialog, resolve } = useConfirm();
+
+  // Lo fabricado no viaja en la orden y solo existe una vez cerrada: se pide
+  // aparte, con el filtro por orden, y únicamente cuando hace falta.
+  const [fabricados, setFabricados] = useState([]);
+  const finalizada = orden?.estado === 'FINALIZADA';
+  useEffect(() => {
+    if (!finalizada) return;
+    let cancelado = false;
+    api.get('/costos/productos_fabricados', { params: { orden_id: id } })
+      .then(res => { if (!cancelado) setFabricados(res.data); })
+      .catch(() => { if (!cancelado) setFabricados([]); });
+    return () => { cancelado = true; };
+  }, [finalizada, id]);
 
   const { mutate: iniciar, loading: iniciando } = useMutation(
     () => api.post(`/costos/ordenes-produccion/${id}/iniciar`),
@@ -112,6 +127,8 @@ export const OrdenProduccionDetailPage = () => {
       {orden.estado === 'EN_PRODUCCION' && (
         <FinalizarOrdenSection orden={orden} onFinalizar={finalizar} saving={finalizando} />
       )}
+
+      <OrdenPrint orden={orden} fabricados={fabricados} />
 
       <OblejaPrint orden={orden} />
 

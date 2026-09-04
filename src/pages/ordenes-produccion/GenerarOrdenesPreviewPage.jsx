@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { addDays, format } from 'date-fns';
-import { ArrowLeft, Wand2, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Wand2, AlertTriangle, ChevronRight, ChevronDown } from 'lucide-react';
 import { PageLoader, ErrorState, EmptyState } from '../../components/ui';
 import { useDebounce, useMutation } from '../../hooks';
 import { api } from '../../services/api';
@@ -19,6 +19,14 @@ const isCantidadValida = (raw) => {
   const n = Number(raw);
   return Number.isInteger(n) && n >= 0;
 };
+
+const toggleEnSet = (set, key) => {
+  const next = new Set(set);
+  if (next.has(key)) next.delete(key); else next.add(key);
+  return next;
+};
+
+const num = (n) => n.toLocaleString('es-AR');
 
 export const GenerarOrdenesPreviewPage = () => {
   const navigate = useNavigate();
@@ -38,13 +46,22 @@ export const GenerarOrdenesPreviewPage = () => {
   const [overrides, setOverrides] = useState({});
   const debouncedOverrides = useDebounce(overrides, 400);
 
+  // Se guardan las DESELECCIONADAS y no las seleccionadas: así "todas
+  // marcadas" es el conjunto vacío y una orden que aparezca en un recálculo
+  // entra seleccionada sin lógica extra.
+  const [deseleccionadas, setDeseleccionadas] = useState(() => new Set());
+  const [expandidas, setExpandidas] = useState(() => new Set());
+
   // Insumos del último recálculo, por ordenKey. Se refrescan contra el backend
   // porque explotar la receta necesita los Costos, que el front no tiene.
   const [insumosByKey, setInsumosByKey] = useState({});
   const [recalculando, setRecalculando] = useState(false);
   const [reintento, setReintento] = useState(0);
 
-  const cantidadesPayload = useCallback((source) => {
+  // Solo las cantidades editadas. Los ceros que representan una orden
+  // deseleccionada NO van acá: si se mandaran al preview, el backend dejaría
+  // de devolver esa orden y perderíamos sus insumos y su fila.
+  const cantidadesEditadas = useCallback((source) => {
     const entries = Object.entries(source).filter(([, v]) => isCantidadValida(v));
     if (entries.length === 0) return undefined;
     return entries.map(([programacion_id, cantidad]) => ({
@@ -61,9 +78,9 @@ export const GenerarOrdenesPreviewPage = () => {
   const requestPreview = useCallback(
     (source) =>
       api
-        .post('/costos/ordenes-produccion/preview', { fecha, cantidades: cantidadesPayload(source) })
+        .post('/costos/ordenes-produccion/preview', { fecha, cantidades: cantidadesEditadas(source) })
         .then(res => res.data),
-    [fecha, cantidadesPayload]
+    [fecha, cantidadesEditadas]
   );
 
   const indexarInsumos = (data) => Object.fromEntries(data.map(o => [ordenKey(o), o.insumos]));
@@ -98,11 +115,6 @@ export const GenerarOrdenesPreviewPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedOverrides, base, requestPreview]);
 
-  const cantidadDe = (linea) => {
-    const raw = overrides[linea.programacion_id];
-    return raw === undefined ? linea.cantidad_planeada : raw;
-  };
-
   const setCantidad = (programacion_id, value) => {
     setOverrides(prev => ({ ...prev, [programacion_id]: value }));
     // Se marca acá y no en el efecto: el indicador tiene que cubrir también
@@ -116,8 +128,9 @@ export const GenerarOrdenesPreviewPage = () => {
   const resumen = useMemo(() => {
     if (!base) return [];
     return base.map(orden => {
+      const key = ordenKey(orden);
       const lineas = orden.productos.map(linea => {
-        const raw = cantidadDe(linea);
+        const raw = overrides[linea.programacion_id] ?? linea.cantidad_planeada;
         const valida = isCantidadValida(raw);
         const cantidad = valida ? Number(raw) : 0;
         return {
@@ -130,28 +143,50 @@ export const GenerarOrdenesPreviewPage = () => {
       });
       const activas = lineas.filter(l => l.valida && l.cantidad > 0);
       const total = activas.reduce((acc, l) => acc + l.cantidad, 0);
+      const seleccionada = !deseleccionadas.has(key);
       return {
+        key,
         orden,
         lineas,
         total,
-        seGenera: activas.length > 0,
+        seleccionada,
+        expandida: expandidas.has(key),
+        tieneLineas: activas.length > 0,
+        seGenera: seleccionada && activas.length > 0,
         bajoLote: total > 0 && total < orden.lote_produccion,
         diferencia: total - orden.lote_produccion,
-        insumos: insumosByKey[ordenKey(orden)] || [],
+        insumos: insumosByKey[key] || [],
       };
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [base, overrides, insumosByKey]);
+  }, [base, overrides, insumosByKey, deseleccionadas, expandidas]);
 
-  const hayInvalidas = resumen.some(r => r.lineas.some(l => !l.valida));
-  const hayDivergentes = resumen.some(r => r.lineas.some(l => l.difiere));
-  const ordenesAGenerar = resumen.filter(r => r.seGenera).length;
+  // Una cantidad inválida en una orden descartada no traba la confirmación:
+  // esa orden no se va a crear.
+  const hayInvalidas = resumen.some(r => r.seleccionada && r.lineas.some(l => !l.valida));
+  const hayDivergentes = resumen.some(r => r.seleccionada && r.lineas.some(l => l.difiere));
+  const aGenerar = resumen.filter(r => r.seGenera).length;
+  const todasSeleccionadas = resumen.length > 0 && resumen.every(r => r.seleccionada);
+  const ningunaSeleccionada = resumen.length > 0 && resumen.every(r => !r.seleccionada);
+
+  const toggleTodas = () => {
+    setDeseleccionadas(todasSeleccionadas ? new Set(resumen.map(r => r.key)) : new Set());
+  };
 
   const { mutate: generar, loading: generando } = useMutation(
-    () => api.post('/costos/ordenes-produccion/generar', {
-      fecha,
-      cantidades: cantidadesPayload(overrides),
-    }),
+    () => {
+      // Las órdenes deseleccionadas viajan con todas sus líneas en 0, que el
+      // backend ya interpreta como "excluir la línea", descartando el grupo
+      // que queda sin ninguna. Solo acá, nunca en el preview.
+      const ceros = {};
+      for (const r of resumen) {
+        if (r.seleccionada) continue;
+        for (const l of r.lineas) ceros[l.programacion_id] = 0;
+      }
+      return api.post('/costos/ordenes-produccion/generar', {
+        fecha,
+        cantidades: cantidadesEditadas({ ...overrides, ...ceros }),
+      });
+    },
     {
       onSuccess: (res) => {
         toast.success(`${res.data.length} orden(es) de producción generada(s)`);
@@ -190,15 +225,15 @@ export const GenerarOrdenesPreviewPage = () => {
           <button
             className="btn btn-primary btn-sm"
             onClick={() => generar()}
-            disabled={generando || hayInvalidas || ordenesAGenerar === 0}
+            disabled={generando || hayInvalidas || aGenerar === 0}
           >
             <Wand2 size={14} />
-            {generando ? 'Generando…' : `Confirmar y Generar (${ordenesAGenerar})`}
+            {generando ? 'Generando…' : `Confirmar y Generar (${aGenerar})`}
           </button>
         </div>
       </div>
 
-      {base.length === 0 && (
+      {base.length === 0 ? (
         <EmptyState
           icon={Wand2}
           title="No hay nada programado para mañana"
@@ -209,54 +244,34 @@ export const GenerarOrdenesPreviewPage = () => {
             </button>
           }
         />
-      )}
-
-      {hayInvalidas && (
-        <div className="alert alert-danger" style={{ marginBottom: 16 }}>
-          Hay cantidades inválidas. Ingresá un número entero mayor o igual a 0 para poder confirmar.
-        </div>
-      )}
-
-      {hayDivergentes && (
-        <div className="alert alert-warning" style={{ marginBottom: 16 }}>
-          Editaste cantidades respecto de lo programado. Las órdenes se van a generar con los valores de
-          esta pantalla; la Programación no se modifica.
-        </div>
-      )}
-
-      {resumen.map(({ orden, lineas, total, seGenera, bajoLote, diferencia, insumos }) => (
-        <div
-          className="card"
-          key={ordenKey(orden)}
-          style={{ marginBottom: 20, opacity: seGenera ? 1 : 0.6 }}
-        >
-          <div className="card-header">
-            <div>
-              <h3 className="card-title">{orden.producto_base_nombre}</h3>
-              <div className="text-sm text-gray">{orden.responsable}</div>
+      ) : (
+        <>
+          {hayInvalidas && (
+            <div className="alert alert-danger" style={{ marginBottom: 16 }}>
+              Hay cantidades inválidas en órdenes seleccionadas. Ingresá un número entero mayor o igual a 0 para poder confirmar.
             </div>
-            {!seGenera && <span className="badge badge-gray">No se genera</span>}
-            {seGenera && bajoLote && <span className="badge badge-danger">Bajo el lote óptimo</span>}
-          </div>
+          )}
 
-          <div className="card-body">
-            <div className="flex items-center gap-4" style={{ flexWrap: 'wrap', marginBottom: 16 }}>
-              <Metrica label="Lote de la Fórmula" value={orden.lote_produccion.toLocaleString('es-AR')} />
-              <Metrica
-                label="Planificado"
-                value={total.toLocaleString('es-AR')}
-                danger={bajoLote}
-              />
-              <Metrica
-                label="Diferencia"
-                value={`${diferencia > 0 ? '+' : ''}${diferencia.toLocaleString('es-AR')}`}
-                danger={bajoLote}
-              />
-              {bajoLote && (
-                <div className="text-sm text-danger flex items-center gap-2">
-                  <AlertTriangle size={14} />
-                  Faltan {(orden.lote_produccion - total).toLocaleString('es-AR')} para completar el lote
-                </div>
+          {ningunaSeleccionada && (
+            <div className="alert alert-info" style={{ marginBottom: 16 }}>
+              No hay ninguna orden seleccionada. Marcá al menos una para poder generar.
+            </div>
+          )}
+
+          {hayDivergentes && (
+            <div className="alert alert-warning" style={{ marginBottom: 16 }}>
+              Editaste cantidades respecto de lo programado. Las órdenes se van a generar con los valores de
+              esta pantalla; la Programación no se modifica.
+            </div>
+          )}
+
+          <div className="card">
+            <div className="card-header">
+              <h3 className="card-title">Órdenes a generar</h3>
+              {recalculando && (
+                <span className="text-sm text-gray flex items-center gap-2">
+                  <span className="spinner" style={{ width: 12, height: 12 }} /> recalculando insumos…
+                </span>
               )}
             </div>
 
@@ -264,84 +279,140 @@ export const GenerarOrdenesPreviewPage = () => {
               <table>
                 <thead>
                   <tr>
-                    <th>Producto</th>
-                    <th style={{ width: 140 }}>Programado</th>
-                    <th style={{ width: 160 }}>Cantidad Planeada</th>
-                    <th></th>
+                    <th style={{ width: 44 }}>
+                      <input
+                        type="checkbox"
+                        aria-label="Seleccionar todas"
+                        checked={todasSeleccionadas}
+                        ref={(el) => { if (el) el.indeterminate = !todasSeleccionadas && !ningunaSeleccionada; }}
+                        onChange={toggleTodas}
+                      />
+                    </th>
+                    <th style={{ width: 36 }}></th>
+                    <th>Orden / Producto</th>
+                    <th style={{ width: 110 }}>Lote Fórmula</th>
+                    <th style={{ width: 110 }}>Programado</th>
+                    <th style={{ width: 150 }}>Cantidad</th>
+                    <th style={{ width: 110 }}>Diferencia</th>
+                    <th style={{ width: 200 }}></th>
                   </tr>
                 </thead>
                 <tbody>
-                  {lineas.map(linea => (
-                    <tr key={linea.programacion_id}>
-                      <td>{linea.producto_nombre}</td>
-                      <td className="text-gray">{linea.cantidad_programada.toLocaleString('es-AR')}</td>
-                      <td>
-                        <input
-                          type="number"
-                          min="0"
-                          step="1"
-                          className={`form-input ${linea.valida ? '' : 'error'}`}
-                          style={{ width: 130 }}
-                          value={linea.raw}
-                          onChange={(e) => setCantidad(linea.programacion_id, e.target.value)}
-                        />
-                      </td>
-                      <td>
-                        {!linea.valida && <span className="text-sm text-danger">Entero ≥ 0</span>}
-                        {linea.valida && linea.cantidad === 0 && (
-                          <span className="badge badge-gray">Excluida</span>
-                        )}
-                        {linea.valida && linea.difiere && linea.cantidad > 0 && (
-                          <span className="badge badge-warning">Difiere del plan</span>
-                        )}
-                      </td>
-                    </tr>
+                  {resumen.map(r => (
+                    <Fragment key={r.key}>
+                      {/* ── Encabezado de la orden ── */}
+                      <tr style={{ background: 'var(--gray-50)', opacity: r.seleccionada ? 1 : 0.5 }}>
+                        <td>
+                          <input
+                            type="checkbox"
+                            aria-label={`Generar ${r.orden.producto_base_nombre} · ${r.orden.responsable}`}
+                            checked={r.seleccionada}
+                            onChange={() => setDeseleccionadas(prev => toggleEnSet(prev, r.key))}
+                          />
+                        </td>
+                        <td>
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-sm"
+                            aria-label={r.expandida ? 'Ocultar insumos' : 'Ver insumos'}
+                            aria-expanded={r.expandida}
+                            style={{ padding: 4 }}
+                            onClick={() => setExpandidas(prev => toggleEnSet(prev, r.key))}
+                          >
+                            {r.expandida ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                          </button>
+                        </td>
+                        <td>
+                          <div style={{ fontWeight: 700 }}>{r.orden.producto_base_nombre}</div>
+                          <div className="text-sm text-gray">{r.orden.responsable}</div>
+                        </td>
+                        <td>{num(r.orden.lote_produccion)}</td>
+                        <td></td>
+                        <td className={r.bajoLote ? 'text-danger' : ''} style={{ fontWeight: 700 }}>
+                          {num(r.total)}
+                        </td>
+                        <td className={r.bajoLote ? 'text-danger' : ''} style={{ fontWeight: 700 }}>
+                          {r.diferencia > 0 ? '+' : ''}{num(r.diferencia)}
+                        </td>
+                        <td>
+                          {!r.seleccionada && <span className="badge badge-gray">No se genera</span>}
+                          {r.seleccionada && !r.tieneLineas && <span className="badge badge-gray">Sin líneas</span>}
+                          {r.seleccionada && r.tieneLineas && r.bajoLote && (
+                            <span className="badge badge-danger" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                              <AlertTriangle size={12} /> Faltan {num(r.orden.lote_produccion - r.total)} para el lote
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+
+                      {/* ── Una fila por producto, con la cantidad editable ── */}
+                      {r.lineas.map(linea => (
+                        <tr key={linea.programacion_id} style={{ opacity: r.seleccionada ? 1 : 0.5 }}>
+                          <td></td>
+                          <td></td>
+                          <td style={{ paddingLeft: 28 }}>{linea.producto_nombre}</td>
+                          <td></td>
+                          <td className="text-gray">{num(linea.cantidad_programada)}</td>
+                          <td>
+                            <input
+                              type="number"
+                              min="0"
+                              step="1"
+                              className={`form-input ${linea.valida ? '' : 'error'}`}
+                              style={{ width: 120 }}
+                              value={linea.raw}
+                              onChange={(e) => setCantidad(linea.programacion_id, e.target.value)}
+                            />
+                          </td>
+                          <td></td>
+                          <td>
+                            {!linea.valida && <span className="text-sm text-danger">Entero ≥ 0</span>}
+                            {linea.valida && linea.cantidad === 0 && <span className="badge badge-gray">Excluida</span>}
+                            {linea.valida && linea.difiere && linea.cantidad > 0 && (
+                              <span className="badge badge-warning">Difiere del plan</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+
+                      {/* ── Detalle desplegable: insumos de esta orden ── */}
+                      {r.expandida && (
+                        <tr style={{ opacity: r.seleccionada ? 1 : 0.5 }}>
+                          <td></td>
+                          <td></td>
+                          <td colSpan={6} style={{ paddingLeft: 28, paddingBottom: 16 }}>
+                            <div className="text-sm text-gray" style={{ marginBottom: 6, fontWeight: 600 }}>
+                              Insumos
+                            </div>
+                            {r.insumos.length === 0 ? (
+                              <div className="text-sm text-gray">
+                                {r.tieneLineas ? 'Esta orden no consume insumos.' : 'Sin insumos: la orden no se va a generar.'}
+                              </div>
+                            ) : (
+                              <table style={{ opacity: recalculando ? 0.5 : 1, maxWidth: 560 }}>
+                                <thead><tr><th>Insumo</th><th>Cantidad</th><th>Unidad</th></tr></thead>
+                                <tbody>
+                                  {r.insumos.map(i => (
+                                    <tr key={i.insumo_id}>
+                                      <td>{i.insumo_nombre}</td>
+                                      <td>{formatCantidadInsumo(i.cantidad)}</td>
+                                      <td>{i.insumo_unidad_medida}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            )}
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
                   ))}
                 </tbody>
               </table>
             </div>
-
-            <hr className="divider" />
-
-            <div className="flex items-center gap-2" style={{ marginBottom: 8 }}>
-              <strong className="text-sm">Insumos</strong>
-              {recalculando && (
-                <span className="text-sm text-gray flex items-center gap-2">
-                  <span className="spinner" style={{ width: 12, height: 12 }} /> recalculando…
-                </span>
-              )}
-            </div>
-
-            {insumos.length === 0 ? (
-              <div className="text-sm text-gray">
-                {seGenera ? 'Esta orden no consume insumos.' : 'Sin insumos: la orden no se va a generar.'}
-              </div>
-            ) : (
-              <div className="table-container" style={{ opacity: recalculando ? 0.5 : 1 }}>
-                <table>
-                  <thead><tr><th>Insumo</th><th>Cantidad</th><th>Unidad</th></tr></thead>
-                  <tbody>
-                    {insumos.map(i => (
-                      <tr key={i.insumo_id}>
-                        <td>{i.insumo_nombre}</td>
-                        <td>{formatCantidadInsumo(i.cantidad)}</td>
-                        <td>{i.insumo_unidad_medida}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
           </div>
-        </div>
-      ))}
+        </>
+      )}
     </div>
   );
 };
-
-const Metrica = ({ label, value, danger }) => (
-  <div>
-    <div className="text-sm text-gray">{label}</div>
-    <div className={`text-lg ${danger ? 'text-danger' : ''}`} style={{ fontWeight: 700 }}>{value}</div>
-  </div>
-);
