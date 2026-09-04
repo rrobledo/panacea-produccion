@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Play, XCircle, ArrowLeft } from 'lucide-react';
+import { Play, XCircle, ArrowLeft, Trash2 } from 'lucide-react';
 import { PageLoader, ErrorState, ConfirmDialog } from '../../components/ui';
 import { OblejaPrint } from './OblejaPrint';
 import { OrdenPrint } from './OrdenPrint';
@@ -10,7 +10,6 @@ import { useFetch, useMutation, useConfirm } from '../../hooks';
 import { api } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import { getErrorMessage } from '../../utils/errorMessage';
-import { formatCantidadInsumo } from '../../utils/format';
 
 export const OrdenProduccionDetailPage = () => {
   const { id } = useParams();
@@ -56,6 +55,29 @@ export const OrdenProduccionDetailPage = () => {
     }
   );
 
+  // Solo se puede borrar lo que nunca llegó a producirse: EN_PRODUCCION ya
+  // consumió insumos y FINALIZADA tiene productos fabricados apuntándola.
+  const sePuedeBorrar = orden?.estado === 'ASIGNADA' || orden?.estado === 'CANCELADA';
+
+  const { mutate: borrar, loading: borrando } = useMutation(
+    () => api.delete(`/costos/ordenes-produccion/${id}`),
+    {
+      onSuccess: () => {
+        toast.success('Orden eliminada');
+        navigate('/ordenes-produccion');
+      },
+      onError: (e) => toast.error(getErrorMessage(e)),
+    }
+  );
+
+  const handleBorrar = async () => {
+    const ok = await confirm({
+      title: `Borrar la orden ${orden.codigo}`,
+      message: `Se va a eliminar la orden ${orden.codigo} junto con sus líneas y la reserva de insumos. Esta acción no se puede deshacer.`,
+    });
+    if (ok) borrar();
+  };
+
   const handleCancelar = async () => {
     const ok = await confirm({
       title: 'Confirmar cancelación',
@@ -93,34 +115,11 @@ export const OrdenProduccionDetailPage = () => {
               </button>
             </>
           )}
-        </div>
-      </div>
-
-      <div className="card">
-        <div className="card-header"><h3 className="card-title">Productos</h3></div>
-        <div className="table-container">
-          <table>
-            <thead><tr><th>Producto</th><th>Cantidad Planeada</th></tr></thead>
-            <tbody>
-              {orden.productos.map(p => (
-                <tr key={p.id}><td>{p.producto?.nombre}</td><td>{p.cantidad_planeada}</td></tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div className="card" style={{ marginTop: 20 }}>
-        <div className="card-header"><h3 className="card-title">Insumos</h3></div>
-        <div className="table-container">
-          <table>
-            <thead><tr><th>Insumo</th><th>Cantidad</th><th>Unidad</th></tr></thead>
-            <tbody>
-              {orden.insumos.map(i => (
-                <tr key={i.id}><td>{i.insumo_nombre}</td><td>{formatCantidadInsumo(i.cantidad)}</td><td>{i.insumo_unidad_medida}</td></tr>
-              ))}
-            </tbody>
-          </table>
+          {sePuedeBorrar && (
+            <button className="btn btn-secondary btn-sm text-danger" onClick={handleBorrar} disabled={borrando}>
+              <Trash2 size={14} /> {borrando ? 'Borrando…' : 'Borrar'}
+            </button>
+          )}
         </div>
       </div>
 

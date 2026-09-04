@@ -1,7 +1,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { addDays, format } from 'date-fns';
-import { ArrowLeft, Wand2, AlertTriangle, ChevronRight, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Wand2, AlertTriangle, ChevronRight, ChevronDown, CheckCircle2 } from 'lucide-react';
 import { PageLoader, ErrorState, EmptyState } from '../../components/ui';
 import { useDebounce, useMutation } from '../../hooks';
 import { api } from '../../services/api';
@@ -64,6 +64,9 @@ export const GenerarOrdenesPreviewPage = () => {
   // Insumos del último recálculo, por ordenKey. Se refrescan contra el backend
   // porque explotar la receta necesita los Costos, que el front no tiene.
   const [insumosByKey, setInsumosByKey] = useState({});
+  // Cuántas órdenes ya tiene la fecha. Distingue "no hay nada programado" de
+  // "ya está todo generado", que si no se verían igual.
+  const [ordenesExistentes, setOrdenesExistentes] = useState(0);
   const [recalculando, setRecalculando] = useState(false);
   const [reintento, setReintento] = useState(0);
 
@@ -92,7 +95,7 @@ export const GenerarOrdenesPreviewPage = () => {
     [fecha, cantidadesEditadas]
   );
 
-  const indexarInsumos = (data) => Object.fromEntries(data.map(o => [ordenKey(o), o.insumos]));
+  const indexarInsumos = (ordenes) => Object.fromEntries(ordenes.map(o => [ordenKey(o), o.insumos]));
 
   // Carga inicial. `reintento` permite volver a dispararla desde el ErrorState.
   useEffect(() => {
@@ -100,8 +103,9 @@ export const GenerarOrdenesPreviewPage = () => {
     requestPreview({})
       .then(data => {
         if (cancelado) return;
-        setBase(data);
-        setInsumosByKey(indexarInsumos(data));
+        setBase(data.ordenes);
+        setInsumosByKey(indexarInsumos(data.ordenes));
+        setOrdenesExistentes(data.ordenes_existentes);
         setError(null);
       })
       .catch(e => { if (!cancelado) setError(e); })
@@ -115,7 +119,7 @@ export const GenerarOrdenesPreviewPage = () => {
     if (!base || Object.keys(debouncedOverrides).length === 0) return;
     let cancelado = false;
     requestPreview(debouncedOverrides)
-      .then(data => { if (!cancelado) setInsumosByKey(indexarInsumos(data)); })
+      .then(data => { if (!cancelado) setInsumosByKey(indexarInsumos(data.ordenes)); })
       .catch(e => { if (!cancelado) toast.error(getErrorMessage(e)); })
       .finally(() => { if (!cancelado) setRecalculando(false); });
     return () => { cancelado = true; };
@@ -132,6 +136,7 @@ export const GenerarOrdenesPreviewPage = () => {
     setDeseleccionadas(new Set());
     setExpandidas(new Set());
     setInsumosByKey({});
+    setOrdenesExistentes(0);
     setRecalculando(false);
     setError(null);
     setLoading(true);
@@ -266,18 +271,38 @@ export const GenerarOrdenesPreviewPage = () => {
           onRetry={() => { setLoading(true); setError(null); setReintento(n => n + 1); }}
         />
       ) : !base || base.length === 0 ? (
-        <EmptyState
-          icon={Wand2}
-          title="No hay nada programado para esa fecha"
-          description={`La Programación no tiene productos con plan para el ${fecha}, así que no hay órdenes para generar. Probá con otra fecha.`}
-          action={
-            <button className="btn btn-secondary btn-sm" onClick={() => navigate('/programacion')}>
-              Ir a Programación
-            </button>
-          }
-        />
+        ordenesExistentes > 0 ? (
+          <EmptyState
+            icon={CheckCircle2}
+            title="Ya está todo generado para esta fecha"
+            description={`El ${fecha} ya tiene ${ordenesExistentes} orden(es) y no queda ningún producto pendiente de generar.`}
+            action={
+              <button className="btn btn-secondary btn-sm" onClick={() => navigate('/ordenes-produccion')}>
+                Ver las órdenes
+              </button>
+            }
+          />
+        ) : (
+          <EmptyState
+            icon={Wand2}
+            title="No hay nada programado para esa fecha"
+            description={`La Programación no tiene productos con plan para el ${fecha}, así que no hay órdenes para generar. Probá con otra fecha.`}
+            action={
+              <button className="btn btn-secondary btn-sm" onClick={() => navigate('/programacion')}>
+                Ir a Programación
+              </button>
+            }
+          />
+        )
       ) : (
         <>
+          {ordenesExistentes > 0 && (
+            <div className="alert alert-info" style={{ marginBottom: 16 }}>
+              Esta fecha ya tiene {ordenesExistentes} orden(es) generada(s). Abajo se muestra únicamente
+              lo que queda pendiente; las órdenes que ya existen no se tocan.
+            </div>
+          )}
+
           {hayInvalidas && (
             <div className="alert alert-danger" style={{ marginBottom: 16 }}>
               Hay cantidades inválidas en órdenes seleccionadas. Ingresá un número entero mayor o igual a 0 para poder confirmar.
