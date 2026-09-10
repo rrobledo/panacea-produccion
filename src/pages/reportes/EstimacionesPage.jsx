@@ -23,6 +23,9 @@ export const EstimacionesPage = () => {
     { accessorKey: 'producto_nombre', header: 'Producto' },
     { accessorKey: 'costo_unitario_mp', header: 'Costo MP', ...money },
     { accessorKey: 'costo_unitario_mo', header: 'Costo MO', ...money },
+    // `costo_unitario_maquina` reemplaza al par `costo_unitario_fab` /
+    // `costo_unitario_fab_new`, que convivían sin que nada dijera cuál regía.
+    // Ver masa-procesos-y-maquinaria, tarea 7.10.
     { accessorKey: 'costo_unitario_fab_new', header: 'Costo Fabricación', ...money },
     { accessorKey: 'costo_total_new', header: 'Costo Total', ...money },
     { accessorKey: 'precio_sugerido', header: 'Precio Fabricación', ...money },

@@ -53,10 +53,17 @@ export const OrdenProduccionDetailPage = () => {
     }
   );
 
+  // Al finalizar, el backend escribe la cantidad fabricada en la columna E de
+  // la Programación de la fecha de la orden. Se lo decimos: el usuario que hoy
+  // transcribe esos números a mano no tiene otra forma de enterarse de que ya
+  // no hace falta.
   const { mutate: finalizar, loading: finalizando } = useMutation(
     (payload) => api.post(`/costos/ordenes-produccion/${id}/finalizar`, payload),
     {
-      onSuccess: () => { toast.success('Orden finalizada'); refetch(); },
+      onSuccess: () => {
+        toast.success(`Orden finalizada — se actualizó la Programación del ${orden?.fecha_fabricacion} con lo ejecutado`);
+        refetch();
+      },
       onError: (e) => toast.error(e.response?.data?.detail || 'Error al finalizar la orden'),
     }
   );

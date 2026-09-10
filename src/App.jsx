@@ -15,6 +15,19 @@ import { InsumoEditPage } from './pages/insumos/InsumoEditPage';
 import { ProductosPage } from './pages/productos/ProductosPage';
 import { ProductoCreatePage } from './pages/productos/ProductoCreatePage';
 import { ProductoEditPage } from './pages/productos/ProductoEditPage';
+import { ProcesosPage } from './pages/procesos/ProcesosPage';
+import { StockArticulosPage } from './pages/stock-articulos/StockArticulosPage';
+import { CosteoGrafoPage } from './pages/costeo/CosteoGrafoPage';
+import { CentrosTrabajoPage } from './pages/costeo/CentrosTrabajoPage';
+import { MaquinariaPage } from './pages/maquinaria/MaquinariaPage';
+import { MaquinaCreatePage } from './pages/maquinaria/MaquinaCreatePage';
+import { MaquinaEditPage } from './pages/maquinaria/MaquinaEditPage';
+import { CargaDiaPage } from './pages/maquinaria/CargaDiaPage';
+import { RelevamientoPage } from './pages/relevamiento/RelevamientoPage';
+import { RelevamientoMasaPage } from './pages/relevamiento/RelevamientoMasaPage';
+import { ComparacionPage } from './pages/relevamiento/ComparacionPage';
+import { ProcesoCreatePage } from './pages/procesos/ProcesoCreatePage';
+import { ProcesoEditPage } from './pages/procesos/ProcesoEditPage';
 import { UbicacionesPage } from './pages/ubicaciones/UbicacionesPage';
 import { UbicacionCreatePage } from './pages/ubicaciones/UbicacionCreatePage';
 import { UbicacionEditPage } from './pages/ubicaciones/UbicacionEditPage';
@@ -85,6 +98,20 @@ function App() {
                     <Route path="/productos/:id/edit"   element={<ProductoEditPage />} />
 
                     {/* UBICACIONES */}
+                    <Route path="/procesos"               element={<ProcesosPage />} />
+                    <Route path="/stock-articulos"        element={<StockArticulosPage />} />
+                    <Route path="/costeo-grafo"           element={<CosteoGrafoPage />} />
+                    <Route path="/centros-trabajo"        element={<CentrosTrabajoPage />} />
+                    <Route path="/maquinaria"             element={<MaquinariaPage />} />
+                    <Route path="/maquinaria/create"      element={<MaquinaCreatePage />} />
+                    <Route path="/maquinaria/:id/edit"    element={<MaquinaEditPage />} />
+                    <Route path="/carga-dia"              element={<CargaDiaPage />} />
+                    <Route path="/relevamiento"           element={<RelevamientoPage />} />
+                    <Route path="/relevamiento/comparar"  element={<ComparacionPage />} />
+                    <Route path="/relevamiento/:id"       element={<RelevamientoMasaPage />} />
+                    <Route path="/procesos/create"        element={<ProcesoCreatePage />} />
+                    <Route path="/procesos/:id/edit"      element={<ProcesoEditPage />} />
+
                     <Route path="/ubicaciones"            element={<UbicacionesPage />} />
                     <Route path="/ubicaciones/create"     element={<UbicacionCreatePage />} />
                     <Route path="/ubicaciones/:id/edit"   element={<UbicacionEditPage />} />

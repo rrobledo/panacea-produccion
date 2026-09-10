@@ -67,6 +67,9 @@ export const GenerarOrdenesPreviewPage = () => {
   // Cuántas órdenes ya tiene la fecha. Distingue "no hay nada programado" de
   // "ya está todo generado", que si no se verían igual.
   const [ordenesExistentes, setOrdenesExistentes] = useState(0);
+  // Sobrecapacidad detectada para esa fecha. Avisa, no bloquea: el jefe de
+  // planta puede saber algo que el sistema no (design.md D9).
+  const [avisosCapacidad, setAvisosCapacidad] = useState([]);
   const [recalculando, setRecalculando] = useState(false);
   const [reintento, setReintento] = useState(0);
 
@@ -106,6 +109,7 @@ export const GenerarOrdenesPreviewPage = () => {
         setBase(data.ordenes);
         setInsumosByKey(indexarInsumos(data.ordenes));
         setOrdenesExistentes(data.ordenes_existentes);
+        setAvisosCapacidad(data.avisos_capacidad || []);
         setError(null);
       })
       .catch(e => { if (!cancelado) setError(e); })
@@ -181,7 +185,10 @@ export const GenerarOrdenesPreviewPage = () => {
         expandida: expandidas.has(key),
         tieneLineas: activas.length > 0,
         seGenera: seleccionada && activas.length > 0,
-        bajoLote: total > 0 && total < orden.lote_produccion,
+        // Con el motor del grafo el lote deja de ser una comparación de
+        // unidades sueltas: se sabe cuánta masa piden las ramas, cuánto se va a
+        // amasar y cuánto sobra, así que se muestra eso en vez de una brecha.
+        bajoLote: orden.proceso_id == null && total > 0 && total < orden.lote_produccion,
         diferencia: total - orden.lote_produccion,
         insumos: insumosByKey[key] || [],
       };
@@ -296,6 +303,21 @@ export const GenerarOrdenesPreviewPage = () => {
         )
       ) : (
         <>
+          {avisosCapacidad.length > 0 && (
+            <div className="card" style={{ marginBottom: 16, borderLeft: '3px solid var(--warning, #B26B15)' }}>
+              <div className="card-header">
+                <h3 className="card-title" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <AlertTriangle size={16} /> El día no entra
+                </h3>
+              </div>
+              <div className="card-body">
+                <ul style={{ margin: 0, paddingLeft: '1.2em' }}>
+                  {avisosCapacidad.map((aviso, i) => <li key={i}>{aviso}</li>)}
+                </ul>
+              </div>
+            </div>
+          )}
+
           {ordenesExistentes > 0 && (
             <div className="alert alert-info" style={{ marginBottom: 16 }}>
               Esta fecha ya tiene {ordenesExistentes} orden(es) generada(s). Abajo se muestra únicamente
@@ -382,6 +404,14 @@ export const GenerarOrdenesPreviewPage = () => {
                         <td>
                           <div style={{ fontWeight: 700 }}>{r.orden.producto_base_nombre}</div>
                           <div className="text-sm text-gray">{r.orden.responsable}</div>
+                          {r.orden.proceso_id != null && (
+                            <div className="text-sm text-gray">
+                              Pide {r.orden.masa_requerida} {r.orden.lote_unidad || 'kg'} · se amasa{' '}
+                              {r.orden.lote_producido} {r.orden.lote_unidad || 'kg'}
+                              {Number(r.orden.masa_desde_stock) > 0 && ` · ${r.orden.masa_desde_stock} de stock`}
+                              {Number(r.orden.sobrante) > 0 && ` · sobran ${r.orden.sobrante}`}
+                            </div>
+                          )}
                         </td>
                         <td>{num(r.orden.lote_produccion)}</td>
                         <td></td>
@@ -399,15 +429,36 @@ export const GenerarOrdenesPreviewPage = () => {
                               <AlertTriangle size={12} /> Faltan {num(r.orden.lote_produccion - r.total)} para el lote
                             </span>
                           )}
+                          {r.seleccionada && Number(r.orden.sobrante) > 0 && (
+                            <span className="badge badge-warning">
+                              Sobran {r.orden.sobrante} {r.orden.lote_unidad || 'kg'}
+                            </span>
+                          )}
+                          {r.orden.pendientes?.length > 0 && (
+                            <span className="badge badge-danger" title={r.orden.pendientes.join(' · ')}>
+                              Falta relevamiento
+                            </span>
+                          )}
                         </td>
                       </tr>
 
                       {/* ── Una fila por producto, con la cantidad editable ── */}
+                      {/* Con el motor del grafo cada rama sabe cuánta masa
+                          consume y cuántos bollos hay que cortar. */}
                       {r.lineas.map(linea => (
                         <tr key={linea.programacion_id} style={{ opacity: r.seleccionada ? 1 : 0.5 }}>
                           <td></td>
                           <td></td>
-                          <td style={{ paddingLeft: 28 }}>{linea.producto_nombre}</td>
+                          <td style={{ paddingLeft: 28 }}>
+                            {linea.producto_nombre}
+                            {linea.masa_kg != null && (
+                              <span className="text-sm text-gray">
+                                {' '}· {linea.masa_kg} {r.orden.lote_unidad || 'kg'}
+                                {linea.gramaje_g != null && ` · ${linea.gramaje_g} g`}
+                                {linea.bollos != null && ` · ${num(linea.bollos)} bollos`}
+                              </span>
+                            )}
+                          </td>
                           <td></td>
                           <td className="text-gray">{num(linea.cantidad_programada)}</td>
                           <td>

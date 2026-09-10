@@ -56,6 +56,13 @@ export const OrdenPrintDocument = ({ orden, fabricados = [], contentRef }) => {
 
   const conDesperdicio = fabricados.filter(f => Number(f.cantidad_desperdicio) > 0);
 
+  // Las órdenes emitidas por el motor viejo no tienen proceso: en esas la orden
+  // se imprime como siempre, con un solo bloque de productos.
+  const porGrafo = orden.proceso_id != null;
+  const operaciones = orden.operaciones || [];
+  const sobrante = Number(orden.lote_producido || 0)
+    - (Number(orden.masa_requerida || 0) - Number(orden.masa_desde_stock || 0));
+
   return (
     <div aria-hidden="true" style={{ height: 0, overflow: 'hidden' }}>
       <div>
@@ -83,6 +90,19 @@ export const OrdenPrintDocument = ({ orden, fabricados = [], contentRef }) => {
             </div>
           </div>
 
+          {porGrafo && (
+            <Bloque titulo="Masa — cuánto amasar">
+              <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap' }}>
+                <Dato label="Requerido por las ramas" value={`${orden.masa_requerida} kg`} />
+                <Dato label="Lote a producir" value={`${orden.lote_producido} kg`} />
+                {Number(orden.masa_desde_stock) > 0 && (
+                  <Dato label="Sale de stock" value={`${orden.masa_desde_stock} kg`} />
+                )}
+                {sobrante > 0 && <Dato label="Sobrante" value={`${sobrante.toFixed(2)} kg`} />}
+              </div>
+            </Bloque>
+          )}
+
           {fechas.length > 0 && (
             <Bloque titulo="Fechas">
               <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap' }}>
@@ -91,18 +111,27 @@ export const OrdenPrintDocument = ({ orden, fabricados = [], contentRef }) => {
             </Bloque>
           )}
 
-          <Bloque titulo="Productos">
+          {/* Bloque B · Partición: qué sacar de la masa. Las columnas de masa,
+              gramaje y bollos sólo las llenan las órdenes emitidas por el motor
+              del grafo; las viejas muestran sólo la cantidad planeada. */}
+          <Bloque titulo={porGrafo ? 'Partición — qué sacar de esa masa' : 'Productos'}>
             <table style={tabla}>
               <thead>
                 <tr>
                   <th style={th}>Producto</th>
-                  <th style={{ ...th, width: 160 }}>Cantidad Planeada</th>
+                  {porGrafo && <th style={{ ...th, width: 90 }}>Masa</th>}
+                  {porGrafo && <th style={{ ...th, width: 90 }}>Gramaje</th>}
+                  {porGrafo && <th style={{ ...th, width: 80 }}>Bollos</th>}
+                  <th style={{ ...th, width: 140 }}>Cantidad Planeada</th>
                 </tr>
               </thead>
               <tbody>
                 {orden.productos.map(p => (
                   <tr key={p.id}>
                     <td style={td}>{p.producto?.nombre}</td>
+                    {porGrafo && <td style={td}>{p.masa_kg != null ? `${p.masa_kg} kg` : '—'}</td>}
+                    {porGrafo && <td style={td}>{p.gramaje_g != null ? `${p.gramaje_g} g` : '—'}</td>}
+                    {porGrafo && <td style={td}>{p.bollos != null ? Number(p.bollos).toLocaleString('es-AR') : '—'}</td>}
                     <td style={td}>{Number(p.cantidad_planeada).toLocaleString('es-AR')}</td>
                   </tr>
                 ))}
@@ -110,7 +139,35 @@ export const OrdenPrintDocument = ({ orden, fabricados = [], contentRef }) => {
             </table>
           </Bloque>
 
-          <Bloque titulo="Insumos">
+          {operaciones.length > 0 && (
+            <Bloque titulo="Recorrido de máquinas">
+              <table style={tabla}>
+                <thead>
+                  <tr>
+                    <th style={th}>Etapa</th>
+                    <th style={th}>Máquina</th>
+                    <th style={{ ...th, width: 70 }}>Bachas</th>
+                    <th style={{ ...th, width: 90 }}>Ocupación</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {operaciones.map(o => (
+                    <tr key={o.id}>
+                      <td style={td}>{o.nombre}</td>
+                      <td style={td}>
+                        {o.maquina_nombre || `${o.maquina_tipo} — sin asignar`}
+                        {!o.requiere_operario && ' · sin operario'}
+                      </td>
+                      <td style={td}>{o.bachas}</td>
+                      <td style={td}>{o.minutos} min</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Bloque>
+          )}
+
+          <Bloque titulo={porGrafo ? 'Fórmula de la masa — insumos a retirar' : 'Insumos'}>
             {orden.insumos.length === 0 ? (
               <div style={{ fontSize: 12, color: 'var(--gray-500)' }}>Esta orden no consume insumos.</div>
             ) : (

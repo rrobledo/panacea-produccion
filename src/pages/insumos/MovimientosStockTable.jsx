@@ -1,4 +1,13 @@
-const TIPO_BADGE = { RESERVA: 'warning', CONSUMO: 'danger', AJUSTE: 'primary' };
+// PRODUCCION y CONSUMO_INTERNO son de artículos producidos (F2b de
+// masa-procesos-y-maquinaria); los otros tres, de insumos. La tabla sirve para
+// los dos: un movimiento tiene la misma forma venga de donde venga.
+const TIPO_BADGE = {
+  RESERVA: 'warning',
+  CONSUMO: 'danger',
+  AJUSTE: 'primary',
+  PRODUCCION: 'success',
+  CONSUMO_INTERNO: 'danger',
+};
 
 export const MovimientosStockTable = ({ movimientos, loading }) => (
   <div className="card" style={{ marginTop: 20 }}>

@@ -4,12 +4,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Field, Tabs } from '../../components/ui';
 import { EntityPicker } from '../../components/form/EntityPicker';
-import { CATEGORIAS, UNIDADES_MEDIDA_PRODUCTO } from './constants';
+import { CATEGORIAS, UNIDADES_MEDIDA_PRODUCTO, NATURALEZAS, UNIDADES_BASE } from './constants';
 
 const TABS = [
   {
     value: 'basica', label: 'Información Básica',
-    fields: ['codigo', 'nombre', 'categoria', 'ref_id', 'lote_produccion', 'unidad_medida', 'tiempo_produccion', 'prioridad', 'producto_base_id'],
+    fields: ['codigo', 'nombre', 'categoria', 'ref_id', 'lote_produccion', 'unidad_medida', 'tiempo_produccion', 'prioridad', 'producto_base_id', 'naturaleza', 'unidad_base', 'peso_unitario_g'],
   },
   { value: 'precios', label: 'Precios y Márgenes', fields: ['precio_actual', 'utilidad'] },
 ];
@@ -28,7 +28,20 @@ const schema = z.object({
   tiempo_produccion: z.coerce.number({ message: 'Ingrese el tiempo' }).min(0),
   prioridad: z.coerce.number({ message: 'Ingrese la prioridad' }).min(0),
   producto_base_id: z.union([z.number(), z.null()]).optional(),
-});
+  // Campos de artículo (masa-procesos-y-maquinaria). Van en el formulario aunque
+  // el motor viejo todavía no los mire: si no se enviaran, el PUT los pisaría
+  // con los valores por defecto del schema del backend y se perdería lo que
+  // dejó el backfill.
+  naturaleza: z.string().min(1, 'Seleccione la naturaleza'),
+  unidad_base: z.string().min(1, 'Seleccione la unidad base'),
+  peso_unitario_g: z.union([z.coerce.number().positive(), z.literal(''), z.null()]).optional(),
+  vendible: z.boolean().default(true),
+}).refine(
+  // Un artículo contado por unidad necesita su peso: es la bisagra que traduce
+  // kilos de masa en cantidad de bollos y al revés.
+  (data) => data.unidad_base !== 'UN' || (data.peso_unitario_g !== '' && data.peso_unitario_g != null),
+  { message: 'Ingrese el peso de una unidad', path: ['peso_unitario_g'] },
+);
 
 const Toggle = ({ label, value, onChange }) => (
   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -59,6 +72,7 @@ export const ProductoForm = ({ initialData, onSubmit, isEdit }) => {
       ref_id: '', precio_actual: '', utilidad: '', lote_produccion: '',
       unidad_medida: '', tiempo_produccion: '', prioridad: '',
       producto_base_id: null,
+      naturaleza: 'TERMINADO', unidad_base: 'UN', peso_unitario_g: '', vendible: true,
       ...initialData,
     },
   });
@@ -79,6 +93,8 @@ export const ProductoForm = ({ initialData, onSubmit, isEdit }) => {
   };
 
   const tabErrorCount = (fields) => fields.filter(f => errors[f]).length;
+
+  const unidadBase = watch('unidad_base');
 
   return (
     <form id="producto-form" onSubmit={handleSubmit(onSubmit, onInvalid)}>
@@ -136,6 +152,37 @@ export const ProductoForm = ({ initialData, onSubmit, isEdit }) => {
                 placeholder="Buscar producto intermedio…"
               />
             </Field>
+          </div>
+
+          <hr className="divider" />
+
+          <div className="form-row">
+            <Field label="Naturaleza" required error={errors.naturaleza?.message} size="md">
+              <select {...register('naturaleza')} className={`form-select ${errors.naturaleza ? 'error' : ''}`}>
+                {NATURALEZAS.map(n => <option key={n.value} value={n.value}>{n.label}</option>)}
+              </select>
+            </Field>
+            <Field
+              label="Unidad Base" required error={errors.unidad_base?.message} size="sm"
+              hint="Cómo se cuenta el stock y se factura"
+            >
+              <select {...register('unidad_base')} className={`form-select ${errors.unidad_base ? 'error' : ''}`}>
+                {UNIDADES_BASE.map(u => <option key={u.value} value={u.value}>{u.label}</option>)}
+              </select>
+            </Field>
+            {unidadBase === 'UN' && (
+              <Field
+                label="Peso Unitario (g)" required error={errors.peso_unitario_g?.message} size="sm"
+                hint="Cuánto pesa una unidad. Traduce unidades a kilos de masa."
+              >
+                <input
+                  {...register('peso_unitario_g')} type="number" step="any" min="0"
+                  className={`form-input ${errors.peso_unitario_g ? 'error' : ''}`}
+                  placeholder="Ej: 110"
+                />
+              </Field>
+            )}
+            <Toggle label="Vendible" value={watch('vendible')} onChange={v => setValue('vendible', v)} />
           </div>
 
           <hr className="divider" />
