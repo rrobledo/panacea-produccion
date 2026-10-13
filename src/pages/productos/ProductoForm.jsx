@@ -20,7 +20,12 @@ const schema = z.object({
   categoria: z.string().min(1, 'Seleccione una categoría'),
   habilitado: z.boolean().default(true),
   is_producto: z.boolean().default(true),
-  ref_id: z.coerce.number({ message: 'Ingrese el ID de referencia' }),
+  // El backend guarda ref_id como texto (y lo castea a int al cruzar con
+  // artículos), así que se valida numérico pero se envía como string.
+  ref_id: z.preprocess(
+    (v) => (v == null ? '' : String(v).trim()),
+    z.string().regex(/^\d+$/, 'Ingrese el ID de referencia'),
+  ),
   precio_actual: z.coerce.number({ message: 'Ingrese el precio' }),
   utilidad: z.coerce.number({ message: 'Ingrese la utilidad' }).min(0).max(100),
   lote_produccion: z.coerce.number({ message: 'Ingrese el lote' }).min(1),
