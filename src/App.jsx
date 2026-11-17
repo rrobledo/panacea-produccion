@@ -15,6 +15,7 @@ import { InsumoEditPage } from './pages/insumos/InsumoEditPage';
 import { ProductosPage } from './pages/productos/ProductosPage';
 import { ProductoCreatePage } from './pages/productos/ProductoCreatePage';
 import { ProductoEditPage } from './pages/productos/ProductoEditPage';
+import { ReferenciasArticulosPage } from './pages/referencias-articulos/ReferenciasArticulosPage';
 import { ProcesosPage } from './pages/procesos/ProcesosPage';
 import { StockArticulosPage } from './pages/stock-articulos/StockArticulosPage';
 import { CosteoGrafoPage } from './pages/costeo/CosteoGrafoPage';
@@ -96,6 +97,7 @@ function App() {
                     <Route path="/productos"            element={<ProductosPage />} />
                     <Route path="/productos/create"     element={<ProductoCreatePage />} />
                     <Route path="/productos/:id/edit"   element={<ProductoEditPage />} />
+                    <Route path="/referencias-articulos" element={<ReferenciasArticulosPage />} />
 
                     {/* UBICACIONES */}
                     <Route path="/procesos"               element={<ProcesosPage />} />

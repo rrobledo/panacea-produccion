@@ -4,13 +4,14 @@ import { useAuth } from '../../context/AuthContext';
 import {
   LayoutDashboard, FileText,
   LogOut, Menu, X, ChevronDown, Bell, Search,
-  Package, ClipboardList, ChevronRight, Truck, Factory, MapPin
+  Package, ClipboardList, ChevronRight, Truck, Factory, MapPin, Link2
 } from 'lucide-react';
 import './layout.css';
 
 const NAV = [
   { label: 'Dashboard', icon: LayoutDashboard, to: '/' },
   { label: 'Productos', icon: Package, to: '/productos' },
+  { label: 'Referencias Sucursales', icon: Link2, to: '/referencias-articulos' },
   { label: 'Programación', icon: ClipboardList, to: '/programacion' },
   {
     label: 'Producción', icon: Factory, children: [

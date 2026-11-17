@@ -22,6 +22,7 @@ export const EntityPicker = ({
   placeholder = 'Buscar…',
   disabled = false,
   params = {},          // optional extra static query params (e.g. { is_producto: false })
+  extraColumns = [],    // optional: [{ field, header }] shown next to the label in the results
 }) => {
   const displayField = labelField || searchField;
   const [label, setLabel] = useState('');
@@ -111,21 +112,22 @@ export const EntityPicker = ({
         <div className="table-container" style={{ maxHeight: 320, overflowY: 'auto' }}>
           <table>
             <thead>
-              <tr><th>{displayField}</th></tr>
+              <tr><th>{displayField}</th>{extraColumns.map(c => <th key={c.field}>{c.header}</th>)}</tr>
             </thead>
             <tbody>
               {queryTooShort ? (
-                <tr><td style={{ textAlign: 'center', padding: 24, color: 'var(--gray-400)' }}>
+                <tr><td colSpan={1 + extraColumns.length} style={{ textAlign: 'center', padding: 24, color: 'var(--gray-400)' }}>
                   Escribí al menos {MIN_QUERY_LENGTH} letras para buscar
                 </td></tr>
               ) : loading ? (
-                <tr><td style={{ textAlign: 'center', padding: 24 }}><div className="spinner" style={{ margin: '0 auto' }} /></td></tr>
+                <tr><td colSpan={1 + extraColumns.length} style={{ textAlign: 'center', padding: 24 }}><div className="spinner" style={{ margin: '0 auto' }} /></td></tr>
               ) : results.length === 0 ? (
-                <tr><td style={{ textAlign: 'center', padding: 24, color: 'var(--gray-400)' }}>Sin resultados</td></tr>
+                <tr><td colSpan={1 + extraColumns.length} style={{ textAlign: 'center', padding: 24, color: 'var(--gray-400)' }}>Sin resultados</td></tr>
               ) : (
                 results.map(row => (
                   <tr key={row[idField]} onClick={() => select(row)} style={{ cursor: 'pointer' }}>
                     <td>{row[displayField]}</td>
+                    {extraColumns.map(c => <td key={c.field}>{row[c.field]}</td>)}
                   </tr>
                 ))
               )}
